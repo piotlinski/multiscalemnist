@@ -49,7 +49,7 @@ def test_load_images(open_mock, from_file_mock):
     from_file_mock.assert_called_with(
         file=open_mock().__enter__.return_value, dtype=np.uint8
     )
-    assert loaded.shape == (3, 28, 28, 1)
+    assert loaded.shape == (3, 28, 28)
 
 
 @patch("multiscalemnist.mnist.np.fromfile", return_value=np.random.random(8 + 3))
@@ -69,8 +69,8 @@ def test_load_labels(open_mock, from_file_mock):
 def test_fetching_mnist(load_images_mock, load_labels_mock, _verify_mock):
     """"""
     images = [
-        np.random.randint(0, 256, (3, 28, 28, 1)),
-        np.random.randint(0, 255, (2, 28, 28, 1)),
+        np.random.randint(0, 256, (3, 28, 28)),
+        np.random.randint(0, 255, (2, 28, 28)),
     ]
     labels = [np.random.randint(0, 10, (3,)), np.random.randint(0, 10, (2,))]
     load_images_mock.side_effect = images
@@ -81,7 +81,7 @@ def test_fetching_mnist(load_images_mock, load_labels_mock, _verify_mock):
     )
     assert "train" in data
     assert "test" in data
-    assert data["train"][0].shape == (3, 28, 28, 1)
-    assert data["test"][0].shape == (2, 28, 28, 1)
+    assert data["train"][0].shape == (3, 28, 28)
+    assert data["test"][0].shape == (2, 28, 28)
     assert data["train"][1].shape == (3,)
     assert data["test"][1].shape == (2,)

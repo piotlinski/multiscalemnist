@@ -38,11 +38,11 @@ def load_images(data_dir: Path, images_file: str) -> np.ndarray:
 
     :param data_dir: directory contining data files
     :param images_file: mnist images file
-    :return: numpy array of shape [length, 28, 28, 1]
+    :return: numpy array of shape [length, 28, 28]
     """
     with data_dir.joinpath(images_file).open() as handle:
         loaded = np.fromfile(file=handle, dtype=np.uint8)
-        return loaded[16:].reshape((-1, 28, 28, 1))
+        return loaded[16:].reshape((-1, 28, 28))
 
 
 def load_labels(data_dir: Path, labels_file) -> np.ndarray:
