@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "MultiScaleMNIST"
+version = "0.1.0"
+description = "MNIST dataset for detection with multiple scales"
+authors = ["PiotrJZielinski <piotrekzie100@gmail.com>"]
+packages = [
+    { include = "multiscalemnist" }
+]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.2"
+pytest-cov = "^2.8.1"
+
+[tool.poetry.scripts]
+multiscalemnist = "multiscalemnist.cli:main"
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
