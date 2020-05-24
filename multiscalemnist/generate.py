@@ -20,16 +20,38 @@ def generate_image_with_annotation(
     config: CfgNode, digits: np.ndarray, digit_labels: np.ndarray
 ):
     """Generate single image with annotations."""
-    n_digits = np.random.randint(config.MIN_DIGTS, config.MAX_DIGITS + 1)
+    areas = [
+        ((0, config.IMAGE_SIZE[0] // 2), (0, config.IMAGE_SIZE[1] // 2)),
+        (
+            (0, config.IMAGE_SIZE[0] // 2),
+            (config.IMAGE_SIZE[1] // 2, config.IMAGE_SIZE[1]),
+        ),
+        (
+            (config.IMAGE_SIZE[0] // 2, config.IMAGE_SIZE[0]),
+            (0, config.IMAGE_SIZE[1] // 2),
+        ),
+        (
+            (config.IMAGE_SIZE[0] // 2, config.IMAGE_SIZE[0]),
+            (config.IMAGE_SIZE[1] // 2, config.IMAGE_SIZE[1]),
+        ),
+    ]
+    n_digits = np.random.randint(1, 5)
     indices = np.random.choice(np.arange(len(digit_labels)), n_digits, replace=False)
-    image = np.zeros(config.IMAGE_SIZE, dtype=np.uint8)
+    areas_indices = np.random.choice(np.arange(len(areas)), n_digits, replace=False)
+    used_areas = [areas[idx] for idx in areas_indices]
+    image = np.zeros(config.IMAGE_SIZE)
     scales = np.random.choice(config.DIGIT_SCALES, n_digits, replace=True)
-    boxes = np.full((config.MAX_DIGITS, 4), -1)
-    labels = np.full(config.MAX_DIGITS, -1)
-    for box_idx, (idx, scale) in enumerate(zip(indices, scales)):
-        x_size, y_size = config.DIGIT_SIZE[0] * scale, config.DIGIT_SIZE[1] * scale
-        y_coord = random_coordinate(0, config.IMAGE_SIZE[0] - y_size)
-        x_coord = random_coordinate(0, config.IMAGE_SIZE[1] - x_size)
+    boxes = np.full((4, 4), -1)
+    labels = np.full(4, -1)
+    for box_idx, (((y_min, y_max), (x_min, x_max)), idx, scale) in enumerate(
+        zip(used_areas, indices, scales)
+    ):
+        x_size, y_size = (
+            int(config.DIGIT_SIZE[0] * scale),
+            int(config.DIGIT_SIZE[1] * scale),
+        )
+        y_coord = random_coordinate(y_min, y_max - y_size)
+        x_coord = random_coordinate(x_min, x_max - x_size)
         digit = cv2.resize(
             digits[idx], dsize=(x_size, y_size), interpolation=cv2.INTER_CUBIC,
         )
@@ -43,7 +65,7 @@ def generate_image_with_annotation(
         ]
         labels[box_idx] = digit_labels[idx]
     image = np.clip(image, 0, 255)
-    return image, boxes, labels
+    return image.astype(np.uint8), boxes, labels
 
 
 def generate_set(config: CfgNode, data: Dict[str, Tuple[np.ndarray, np.ndarray]]):
@@ -67,15 +89,15 @@ def generate_set(config: CfgNode, data: Dict[str, Tuple[np.ndarray, np.ndarray]]
             )
             boxes_set = h5set.create_dataset(
                 "boxes",
-                shape=(dataset_sizes[dataset], config.MAX_DIGITS, 4),
-                chunks=(config.CHUNK_SIZE, config.MAX_DIGITS, 4),
-                dtype=np.uint8,
+                shape=(dataset_sizes[dataset], 4, 4),
+                chunks=(config.CHUNK_SIZE, 4, 4),
+                dtype=np.int,
             )
             labels_set = h5set.create_dataset(
                 "labels",
-                shape=(dataset_sizes[dataset], config.MAX_DIGITS),
-                chunks=(config.CHUNK_SIZE, config.MAX_DIGITS),
-                dtype=np.uint8,
+                shape=(dataset_sizes[dataset], 4),
+                chunks=(config.CHUNK_SIZE, 4),
+                dtype=np.int,
             )
             for idx in trange(dataset_sizes[dataset]):
                 image, boxes, labels = generate_image_with_annotation(
