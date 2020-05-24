@@ -1,4 +1,5 @@
 """Command Line Interface"""
+import logging
 from typing import Optional
 
 import click
@@ -16,6 +17,7 @@ def main(ctx: click.Context, config_file: Optional[str]):
     """Main group for subcommands."""
     ctx.ensure_object(CfgNode)
     config = get_config(config_file=config_file)
+    logging.basicConfig(level=logging.INFO)
     ctx.obj = config
 
 

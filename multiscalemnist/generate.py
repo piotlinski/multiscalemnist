@@ -17,14 +17,15 @@ def random_coordinate(min_idx: int, max_idx: int):
 
 
 def generate_image_with_annotation(
-    config: CfgNode, digits: np.ndarray, labels: np.ndarray
+    config: CfgNode, digits: np.ndarray, digit_labels: np.ndarray
 ):
     """Generate single image with annotations."""
     n_digits = np.random.randint(config.MIN_DIGTS, config.MAX_DIGITS + 1)
-    indices = np.random.choice(np.arange(len(labels)), n_digits, replace=False)
+    indices = np.random.choice(np.arange(len(digit_labels)), n_digits, replace=False)
     image = np.zeros(config.IMAGE_SIZE, dtype=np.uint8)
     scales = np.random.choice(config.DIGIT_SCALES, n_digits, replace=True)
-    boxes = np.empty((len(indices), 4))
+    boxes = np.full((config.MAX_DIGITS, 4), -1)
+    labels = np.full(config.MAX_DIGITS, -1)
     for box_idx, (idx, scale) in enumerate(zip(indices, scales)):
         x_size, y_size = config.DIGIT_SIZE[0] * scale, config.DIGIT_SIZE[1] * scale
         y_coord = random_coordinate(0, config.IMAGE_SIZE[0] - y_size)
@@ -40,13 +41,14 @@ def generate_image_with_annotation(
             x_coord + white_xs.max(),
             y_coord + white_ys.max(),
         ]
+        labels[box_idx] = digit_labels[idx]
     image = np.clip(image, 0, 255)
-    return image, boxes, labels[indices]
+    return image, boxes, labels
 
 
 def generate_set(config: CfgNode, data: Dict[str, Tuple[np.ndarray, np.ndarray]]):
     """Generate entire dataset of MultiScaleMNIST."""
-    with h5py.File(config.FILE_NAME) as f:
+    with h5py.File(config.FILE_NAME, mode="w") as f:
         dataset_sizes = {"train": config.TRAIN_LENGTH, "test": config.TEST_LENGTH}
         for dataset in ["train", "test"]:
             digits, digit_labels = data[dataset]
@@ -77,7 +79,7 @@ def generate_set(config: CfgNode, data: Dict[str, Tuple[np.ndarray, np.ndarray]]
             )
             for idx in trange(dataset_sizes[dataset]):
                 image, boxes, labels = generate_image_with_annotation(
-                    config=config, digits=digits, labels=digit_labels
+                    config=config, digits=digits, digit_labels=digit_labels
                 )
                 images_set[idx] = image
                 boxes_set[idx] = boxes

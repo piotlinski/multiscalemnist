@@ -33,8 +33,10 @@ def test_download_mnist(call_mock):
     download_mnist(data_dir=data_dir, mnist_keys=mnist_keys, mnist_url=mnist_url)
     call_mock.assert_has_calls(
         [
-            call(f"curl {mnist_url}{mnist_keys[0]}.gz -o {str(target_path)}"),
-            call(f"gunzip -d {str(target_path)}"),
+            call(
+                f"curl {mnist_url}{mnist_keys[0]}.gz -o {str(target_path)}", shell=True
+            ),
+            call(f"gunzip -d {str(target_path)}", shell=True),
         ]
     )
 
