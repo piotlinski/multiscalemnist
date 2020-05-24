@@ -2,7 +2,14 @@
 from pathlib import Path
 from unittest.mock import call, patch
 
-from multiscalemnist.mnist import download_mnist, verify_mnist_dir
+import numpy as np
+
+from multiscalemnist.mnist import (
+    download_mnist,
+    load_images,
+    load_labels,
+    verify_mnist_dir,
+)
 
 
 @patch("multiscalemnist.mnist.download_mnist")
@@ -29,3 +36,27 @@ def test_download_mnist(call_mock):
             call(f"gunzip -d {str(target_path)}"),
         ]
     )
+
+
+@patch(
+    "multiscalemnist.mnist.np.fromfile", return_value=np.random.random(16 + 3 * 28 * 28)
+)
+@patch("multiscalemnist.mnist.Path.open")
+def test_load_images(open_mock, from_file_mock):
+    """Test loading images from file."""
+    loaded = load_images(data_dir=Path("test"), images_file="test_file")
+    from_file_mock.assert_called_with(
+        file=open_mock().__enter__.return_value, dtype=np.uint8
+    )
+    assert loaded.shape == (3, 28, 28, 1)
+
+
+@patch("multiscalemnist.mnist.np.fromfile", return_value=np.random.random(8 + 3))
+@patch("multiscalemnist.mnist.Path.open")
+def test_load_labels(open_mock, from_file_mock):
+    """Test loading labels from file."""
+    loaded = load_labels(data_dir=Path("test"), labels_file="test_file")
+    from_file_mock.assert_called_with(
+        file=open_mock().__enter__.return_value, dtype=np.uint8
+    )
+    assert loaded.shape == (3,)

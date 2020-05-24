@@ -3,6 +3,8 @@ import subprocess
 from pathlib import Path
 from typing import List
 
+import numpy as np
+
 MNIST_URL = "http://yann.lecun.com/exdb/mnist/"
 MNIST_KEYS: List[str] = [
     "train-images-idx3-ubyte",
@@ -29,3 +31,27 @@ def download_mnist(data_dir: Path, mnist_keys: List[str], mnist_url: str):
         subprocess.call(cmd)
         cmd = f"gunzip -d {str(target_path)}"
         subprocess.call(cmd)
+
+
+def load_images(data_dir: Path, images_file: str) -> np.ndarray:
+    """ Load data from image file.
+
+    :param data_dir: directory contining data files
+    :param images_file: mnist images file
+    :return: numpy array of shape [length, 28, 28, 1]
+    """
+    with data_dir.joinpath(images_file).open() as handle:
+        loaded = np.fromfile(file=handle, dtype=np.uint8)
+        return loaded[16:].reshape((-1, 28, 28, 1))
+
+
+def load_labels(data_dir: Path, labels_file) -> np.ndarray:
+    """ Load data from labels file.
+
+    :param data_dir:directory contining data files
+    :param labels_file: mnist labels file
+    :return: numpy array of shape [length]
+    """
+    with data_dir.joinpath(labels_file).open() as handle:
+        loaded = np.fromfile(file=handle, dtype=np.uint8)
+        return loaded[8:]
