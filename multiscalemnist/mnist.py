@@ -1,27 +1,27 @@
 """Original MNIST handlers."""
 import subprocess
 from pathlib import Path
-from typing import List
+from typing import Dict, Tuple
 
 import numpy as np
 
 MNIST_URL = "http://yann.lecun.com/exdb/mnist/"
-MNIST_KEYS: List[str] = [
+MNIST_KEYS: Tuple[str, ...] = (
     "train-images-idx3-ubyte",
     "train-labels-idx1-ubyte",
     "t10k-images-idx3-ubyte",
     "t10k-labels-idx1-ubyte",
-]
+)
 
 
-def verify_mnist_dir(data_dir: Path, mnist_keys: List[str]):
+def verify_mnist_dir(data_dir: Path, mnist_keys: Tuple[str, ...]):
     """Check if data already downloaded and invoke downloading if needed."""
     if not all([data_dir.joinpath(file).exists() for file in mnist_keys]):
         data_dir.mkdir()
         download_mnist(data_dir=data_dir, mnist_keys=mnist_keys, mnist_url=MNIST_URL)
 
 
-def download_mnist(data_dir: Path, mnist_keys: List[str], mnist_url: str):
+def download_mnist(data_dir: Path, mnist_keys: Tuple[str, ...], mnist_url: str):
     """Download MNIST dataset."""
     for key in mnist_keys:
         key += ".gz"
@@ -55,3 +55,27 @@ def load_labels(data_dir: Path, labels_file) -> np.ndarray:
     with data_dir.joinpath(labels_file).open() as handle:
         loaded = np.fromfile(file=handle, dtype=np.uint8)
         return loaded[8:]
+
+
+def fetch_mnist(
+    data_dir: str = "mnist", mnist_keys: Tuple[str, ...] = MNIST_KEYS
+) -> Dict[str, Tuple[np.ndarray, np.ndarray]]:
+    """
+
+    :param data_dir:
+    :param mnist_keys:
+    :return:
+    """
+    data_path = Path(data_dir)
+    verify_mnist_dir(data_dir=data_path, mnist_keys=mnist_keys)
+    train_images, train_labels, test_images, test_labels = 4 * [np.empty(0)]
+    for key in mnist_keys:
+        if "train-images" in key:
+            train_images = load_images(data_dir=data_path, images_file=key)
+        elif "train-labels" in key:
+            train_labels = load_labels(data_dir=data_path, labels_file=key)
+        elif "t10k-images" in key:
+            test_images = load_images(data_dir=data_path, images_file=key)
+        elif "t10k-labels" in key:
+            test_labels = load_labels(data_dir=data_path, labels_file=key)
+    return {"train": (train_images, train_labels), "test": (test_images, test_labels)}
