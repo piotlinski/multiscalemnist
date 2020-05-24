@@ -60,11 +60,11 @@ def load_labels(data_dir: Path, labels_file) -> np.ndarray:
 def fetch_mnist(
     data_dir: str = "mnist", mnist_keys: Tuple[str, ...] = MNIST_KEYS
 ) -> Dict[str, Tuple[np.ndarray, np.ndarray]]:
-    """
+    """ Get dictionary with MNIST dataset.
 
-    :param data_dir:
-    :param mnist_keys:
-    :return:
+    :param data_dir: directory with MNIST files
+    :param mnist_keys: MNIST files names
+    :return: dictionary with train and test dataset
     """
     data_path = Path(data_dir)
     verify_mnist_dir(data_dir=data_path, mnist_keys=mnist_keys)

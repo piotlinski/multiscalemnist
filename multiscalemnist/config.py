@@ -9,12 +9,15 @@ logger = logging.getLogger(__name__)
 
 
 _C = CfgNode()
-_C.SUBSET = "train"
+_C.FILE_NAME = "multiscalemnist.h5"
 _C.IMAGE_SIZE = (512, 512)
 _C.DIGIT_SIZE = (128, 128)
 _C.DIGIT_SCALES = (1, 2, 3)
 _C.MIN_DIGTS = 2
 _C.MAX_DIGITS = 5
+_C.TRAIN_LENGTH = 50_000
+_C.TEST_LENGTH = 10_000
+_C.CHUNK_SIZE = 32
 
 
 def get_config(config_file: Optional[str] = None, **kwargs) -> CfgNode:

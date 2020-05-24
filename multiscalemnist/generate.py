@@ -1,8 +1,11 @@
 """Generate MultiScaleMNIST dataset."""
 import logging
+from typing import Dict, Tuple
 
 import cv2
+import h5py
 import numpy as np
+from tqdm.auto import trange
 from yacs.config import CfgNode
 
 logger = logging.getLogger(__name__)
@@ -39,3 +42,44 @@ def generate_image_with_annotation(
         ]
     image = np.clip(image, 0, 255)
     return image, boxes, labels[indices]
+
+
+def generate_set(config: CfgNode, data: Dict[str, Tuple[np.ndarray, np.ndarray]]):
+    """Generate entire dataset of MultiScaleMNIST."""
+    with h5py.File(config.FILE_NAME) as f:
+        dataset_sizes = {"train": config.TRAIN_LENGTH, "test": config.TEST_LENGTH}
+        for dataset in ["train", "test"]:
+            digits, digit_labels = data[dataset]
+            logger.info(
+                "Creating %s dataset in file %s with %d entries",
+                dataset,
+                config.FILE_NAME,
+                dataset_sizes[dataset],
+            )
+            h5set = f.create_group(dataset)
+            images_set = h5set.create_dataset(
+                "images",
+                shape=(dataset_sizes[dataset], *config.IMAGE_SIZE),
+                chunks=(config.CHUNK_SIZE, *config.IMAGE_SIZE),
+                dtype=np.uint8,
+            )
+            boxes_set = h5set.create_dataset(
+                "boxes",
+                shape=(dataset_sizes[dataset], config.MAX_DIGITS, 4),
+                chunks=(config.CHUNK_SIZE, config.MAX_DIGITS, 4),
+                dtype=np.uint8,
+            )
+            labels_set = h5set.create_dataset(
+                "labels",
+                shape=(dataset_sizes[dataset], config.MAX_DIGITS),
+                chunks=(config.CHUNK_SIZE, config.MAX_DIGITS),
+                dtype=np.uint8,
+            )
+            for idx in trange(dataset_sizes[dataset]):
+                image, boxes, labels = generate_image_with_annotation(
+                    config=config, digits=digits, labels=digit_labels
+                )
+                images_set[idx] = image
+                boxes_set[idx] = boxes
+                labels_set[idx] = labels
+    logger.info("Done!")
