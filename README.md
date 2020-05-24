@@ -18,5 +18,6 @@ Requirements:
 - Install package with poetry `poetry install`
 - Enter the shell `poetry shell`
 - Adjust settings by modifying `config.py` or passing config file (see
-  `multiscalemnist --help` for info)
+  `multiscalemnist --help` for info; i.e.
+  `multiscalemnist --config-file=config.yml generate`)
 - Run generator `multiscalemnist generate`
