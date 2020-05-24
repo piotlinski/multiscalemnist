@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "MultiScaleMNIST"
+name = "multiscalemnist"
 version = "0.1.0"
 description = "MNIST dataset for detection with multiple scales"
 authors = ["PiotrJZielinski <piotrekzie100@gmail.com>"]
@@ -9,6 +9,12 @@ packages = [
 
 [tool.poetry.dependencies]
 python = "^3.8"
+numpy = "^1.18.4"
+yacs = "^0.1.7"
+opencv-python = "^4.2.0"
+h5py = "^2.10.0"
+tqdm = "^4.46.0"
+click = "^7.1.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"

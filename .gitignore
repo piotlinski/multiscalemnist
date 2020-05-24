@@ -210,3 +210,5 @@ dmypy.json
 
 # data dir
 data/*
+mnist/*
+*.h5
