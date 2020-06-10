@@ -1,14 +1,8 @@
 """Test MultiScaleMNIST generating."""
-from unittest.mock import call, patch
-
 import numpy as np
 import pytest
 
-from multiscalemnist.generate import (
-    generate_image_with_annotation,
-    generate_set,
-    random_coordinate,
-)
+from multiscalemnist.generate import random_cell, random_coordinate
 
 
 @pytest.mark.parametrize("min_val, max_val", [(0, 3), (5, 12), (120, 332)])
@@ -17,27 +11,27 @@ def test_random_coordinate(min_val, max_val):
     assert min_val <= random_coordinate(min_val, max_val) < max_val
 
 
-def test_generate_image_with_annotation(sample_config):
-    """Test generating image with annotation."""
-    digits = np.random.randint(0, 256, (4, 28, 28), dtype=np.uint8)
-    digit_labels = np.random.randint(0, 10, (4,), dtype=np.uint8)
-    image, boxes, labels = generate_image_with_annotation(
-        sample_config, digits, digit_labels
-    )
-    assert image.shape == sample_config.IMAGE_SIZE
-    assert boxes.shape[0] == labels.shape[0] == 4
-    assert boxes.shape[1] == 4
+@pytest.mark.parametrize("_iter", range(5))
+@pytest.mark.parametrize("grid_size", [[2, 2], [5, 5], [3, 7]])
+def test_random_cell(grid_size, _iter):
+    """Test drawing random indices in grid."""
+    grid = np.zeros(grid_size)
+    y_idx, x_idx = random_cell(grid)
+    assert 0 <= y_idx < grid_size[0]
+    assert 0 <= x_idx < grid_size[1]
 
 
-@patch("multiscalemnist.generate.h5py.File")
-def test_generating_entire_dataset(h5_mock, sample_config):
-    """Test generating entire dataset with H5."""
-    digits = np.random.randint(0, 256, (4, 28, 28), dtype=np.uint8)
-    digit_labels = np.random.randint(0, 10, (4,), dtype=np.uint8)
-    data = {"train": (digits, digit_labels), "test": (digits, digit_labels)}
-    generate_set(sample_config, data)
-    enter_mock = h5_mock.return_value.__enter__
-    enter_mock.assert_called()
-    enter_mock.return_value.create_group.assert_has_calls(
-        [call("train"), call("test")], any_order=True
-    )
+@pytest.mark.parametrize("_iter", range(5))
+def test_draw_indices_with_ones(_iter):
+    """Test if nonzero cell is not drawn."""
+    grid = np.zeros((3, 3))
+    nonzero_inds = random_cell(grid)
+    grid[nonzero_inds] = 1
+    inds = random_cell(grid)
+    assert not (inds[0] == nonzero_inds[0] and inds[1] == nonzero_inds[1])
+
+
+def test_draw_indices_ones():
+    """Test if None returned when no indices can be drawn."""
+    grid = np.ones((3, 3))
+    assert random_cell(grid) is None

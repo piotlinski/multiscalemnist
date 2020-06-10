@@ -1,6 +1,6 @@
 """Generate MultiScaleMNIST dataset."""
 import logging
-from typing import Dict, Tuple, Optional
+from typing import Dict, Optional, Tuple
 
 import cv2
 import h5py
@@ -22,12 +22,15 @@ def random_cell(grid: np.ndarray) -> Optional[Tuple[int, int]]:
     :param grid: array with zeros (empty cells) and ones (full cells)
     :return: random empty cell index or None if no available
     """
+    unfilled_inds = np.argwhere(grid == 0)
+    if unfilled_inds.size == 0:
+        return None
+    idx = np.random.randint(0, unfilled_inds.shape[0])
+    return unfilled_inds[idx]
 
 
 def random_digit_size(
-        grid: np.ndarray,
-        cell_index: Tuple[int, int],
-        position_variance: float
+    grid: np.ndarray, cell_index: Tuple[int, int], position_variance: float
 ) -> int:
     """ Get random digit size that will fit the given cell and its surroundings.
 
@@ -39,9 +42,7 @@ def random_digit_size(
 
 
 def calculate_center_coords(
-        cell_index: Tuple[int, int],
-        grid_size: Tuple[int, int],
-        image_size: Tuple[int, int]
+    cell_index: Tuple[int, int], grid_size: Tuple[int, int], image_size: Tuple[int, int]
 ) -> Tuple[int, int]:
     """ Calculate cell center coordinates.
 
@@ -53,9 +54,7 @@ def calculate_center_coords(
 
 
 def randomize_center_coords(
-        cell_center: Tuple[int, int],
-        cell_size: Tuple[int, int],
-        position_variance: float
+    cell_center: Tuple[int, int], cell_size: Tuple[int, int], position_variance: float
 ) -> Tuple[int, int]:
     """ Get randomized coordinates for digit center.
 
@@ -67,7 +66,7 @@ def randomize_center_coords(
 
 
 def calculate_box_coords(
-        digit: np.ndarray, center_coords: Tuple[int, int]
+    digit: np.ndarray, center_coords: Tuple[int, int]
 ) -> Tuple[int, int, int, int]:
     """ Calculate bounding box coordinates (x, y, w, h).
 
@@ -78,7 +77,7 @@ def calculate_box_coords(
 
 
 def put_digit(
-        image: np.ndarray, digit: np.ndarray, center_coords: Tuple[int, int]
+    image: np.ndarray, digit: np.ndarray, center_coords: Tuple[int, int]
 ) -> np.ndarray:
     """ Put given digit on the image at given coordinates.
 
@@ -90,10 +89,10 @@ def put_digit(
 
 
 def mark_as_filled(
-        grid: np.ndarray,
-        image_size: Tuple[int, int],
-        bounding_box: Tuple[int, int, int, int],
-        threshold: float
+    grid: np.ndarray,
+    image_size: Tuple[int, int],
+    bounding_box: Tuple[int, int, int, int],
+    threshold: float,
 ) -> np.ndarray:
     """ Mark grid cells as filled.
 
@@ -106,12 +105,12 @@ def mark_as_filled(
 
 
 def generate_image_with_annotation(
-        digits: np.ndarray,
-        digit_labels: np.ndarray,
-        grid_size: Tuple[int, int],
-        image_size: Tuple[int, int],
-        position_variance: float,
-        cell_filled_threshold: float,
+    digits: np.ndarray,
+    digit_labels: np.ndarray,
+    grid_size: Tuple[int, int],
+    image_size: Tuple[int, int],
+    position_variance: float,
+    cell_filled_threshold: float,
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """ Generate image with digits put in a grid of given size.
 
@@ -143,14 +142,14 @@ def generate_image_with_annotation(
         digit_center_coords = randomize_center_coords(
             cell_center=cell_center,
             cell_size=cell_size,
-            position_variance=position_variance
+            position_variance=position_variance,
         )
         digit = cv2.resize(
-            digits[digit_idx], dsize=(digit_size, digit_size), interpolation=cv2.INTER_CUBIC
+            digits[digit_idx],
+            dsize=(digit_size, digit_size),
+            interpolation=cv2.INTER_CUBIC,
         )
-        image = put_digit(
-            image=image, digit=digit, center_coords=digit_center_coords
-        )
+        image = put_digit(image=image, digit=digit, center_coords=digit_center_coords)
         label = digit_labels[digit_idx]
         bounding_box = calculate_box_coords(
             digit=digit, center_coords=digit_center_coords
@@ -159,7 +158,7 @@ def generate_image_with_annotation(
             grid=grid,
             image_size=image_size,
             bounding_box=bounding_box,
-            threshold=cell_filled_threshold
+            threshold=cell_filled_threshold,
         )
         labels[idx] = label
         bounding_boxes[idx] = bounding_box
