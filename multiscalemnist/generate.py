@@ -1,6 +1,6 @@
 """Generate MultiScaleMNIST dataset."""
 import logging
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Optional
 
 import cv2
 import h5py
@@ -16,56 +16,155 @@ def random_coordinate(min_idx: int, max_idx: int):
     return np.random.randint(min_idx, max_idx)
 
 
+def random_cell(grid: np.ndarray) -> Optional[Tuple[int, int]]:
+    """ Get random unused cell index from grid.
+
+    :param grid: array with zeros (empty cells) and ones (full cells)
+    :return: random empty cell index or None if no available
+    """
+
+
+def random_digit_size(
+        grid: np.ndarray,
+        cell_index: Tuple[int, int],
+        position_variance: float
+) -> int:
+    """ Get random digit size that will fit the given cell and its surroundings.
+
+    :param grid: array with zeros (empty cells) and ones (full cells)
+    :param cell_index: selected cell index to put digit in
+    :param position_variance: how much digit position may vary from cell center
+    :return: random digit size (pixels) that will fit in given place
+    """
+
+
+def calculate_center_coords(
+        cell_index: Tuple[int, int],
+        grid_size: Tuple[int, int],
+        image_size: Tuple[int, int]
+) -> Tuple[int, int]:
+    """ Calculate cell center coordinates.
+
+    :param cell_index: selected cell index
+    :param grid_size: grid size (height, width)
+    :param image_size: image size (height, width)
+    :return: given cell center coordinates (y, x)
+    """
+
+
+def randomize_center_coords(
+        cell_center: Tuple[int, int],
+        cell_size: Tuple[int, int],
+        position_variance: float
+) -> Tuple[int, int]:
+    """ Get randomized coordinates for digit center.
+
+    :param cell_center: cell center for putting the image
+    :param cell_size: given cell size (height, width)
+    :param position_variance: maximum position variance
+    :return: digit center coordinates
+    """
+
+
+def calculate_box_coords(
+        digit: np.ndarray, center_coords: Tuple[int, int]
+) -> Tuple[int, int, int, int]:
+    """ Calculate bounding box coordinates (x, y, w, h).
+
+    :param digit: single digit transformed image
+    :param center_coords: coordinates to put digit center at
+    :return: bounding box coordinates: central point, width, height
+    """
+
+
+def put_digit(
+        image: np.ndarray, digit: np.ndarray, center_coords: Tuple[int, int]
+) -> np.ndarray:
+    """ Put given digit on the image at given coordinates.
+
+    :param image: image to put digit on
+    :param digit: transformed digit
+    :param center_coords: coordinates where digit should be put
+    :return: image with digit put on it
+    """
+
+
+def mark_as_filled(
+        grid: np.ndarray,
+        image_size: Tuple[int, int],
+        bounding_box: Tuple[int, int, int, int],
+        threshold: float
+) -> np.ndarray:
+    """ Mark grid cells as filled.
+
+    :param grid: given grid array
+    :param image_size: output image size
+    :param bounding_box: inserted digit bounding box (x, y, w, h)
+    :param threshold: minimum part of cell obscured to mark as filled
+    :return:
+    """
+
+
 def generate_image_with_annotation(
-    config: CfgNode, digits: np.ndarray, digit_labels: np.ndarray
-):
-    """Generate single image with annotations."""
-    areas = [
-        ((0, config.IMAGE_SIZE[0] // 2), (0, config.IMAGE_SIZE[1] // 2)),
-        (
-            (0, config.IMAGE_SIZE[0] // 2),
-            (config.IMAGE_SIZE[1] // 2, config.IMAGE_SIZE[1]),
-        ),
-        (
-            (config.IMAGE_SIZE[0] // 2, config.IMAGE_SIZE[0]),
-            (0, config.IMAGE_SIZE[1] // 2),
-        ),
-        (
-            (config.IMAGE_SIZE[0] // 2, config.IMAGE_SIZE[0]),
-            (config.IMAGE_SIZE[1] // 2, config.IMAGE_SIZE[1]),
-        ),
-    ]
-    n_digits = np.random.randint(1, 5)
+        digits: np.ndarray,
+        digit_labels: np.ndarray,
+        grid_size: Tuple[int, int],
+        image_size: Tuple[int, int],
+        position_variance: float,
+        cell_filled_threshold: float,
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """ Generate image with digits put in a grid of given size.
+
+    :param digits: numpy array with digits to put on the image
+    :param digit_labels: numpy array with digit labels
+    :param grid_size: tuple defining grid for digits
+    :param image_size: output image size (height, width)
+    :param position_variance: how much digit position may vary from cell center
+    :param cell_filled_threshold: minimum proportion to mark grid cell as filled
+    :return: tuple: image, bounding boxes and labels
+    """
+    grid = np.zeros(grid_size)
+    image = np.zeros(image_size)
+    bounding_boxes = np.full((np.prod(grid_size), 4), -1)
+    labels = np.full(np.prod(grid_size), -1)
+    cell_size = image_size[0] // grid_size[0], image_size[1] // grid_size[1]
+    n_digits = np.random.randint(np.prod(grid_size) // 2, np.prod(grid_size) + 1)
     indices = np.random.choice(np.arange(len(digit_labels)), n_digits, replace=False)
-    areas_indices = np.random.choice(np.arange(len(areas)), n_digits, replace=False)
-    used_areas = [areas[idx] for idx in areas_indices]
-    image = np.zeros(config.IMAGE_SIZE)
-    scales = np.random.choice(config.DIGIT_SCALES, n_digits, replace=True)
-    boxes = np.full((4, 4), -1)
-    labels = np.full(4, -1)
-    for box_idx, (((y_min, y_max), (x_min, x_max)), idx, scale) in enumerate(
-        zip(used_areas, indices, scales)
-    ):
-        x_size, y_size = (
-            int(config.DIGIT_SIZE[0] * scale),
-            int(config.DIGIT_SIZE[1] * scale),
+    for idx, digit_idx in enumerate(indices):
+        cell_idx = random_cell(grid)
+        if cell_idx is None:
+            break
+        digit_size = random_digit_size(
+            grid=grid, cell_index=cell_idx, position_variance=position_variance
         )
-        y_coord = random_coordinate(y_min, y_max - y_size)
-        x_coord = random_coordinate(x_min, x_max - x_size)
+        cell_center = calculate_center_coords(
+            cell_index=cell_idx, grid_size=grid_size, image_size=image_size
+        )
+        digit_center_coords = randomize_center_coords(
+            cell_center=cell_center,
+            cell_size=cell_size,
+            position_variance=position_variance
+        )
         digit = cv2.resize(
-            digits[idx], dsize=(x_size, y_size), interpolation=cv2.INTER_CUBIC,
+            digits[digit_idx], dsize=(digit_size, digit_size), interpolation=cv2.INTER_CUBIC
         )
-        white_ys, white_xs = np.where(digit > 0)
-        image[y_coord : y_coord + y_size, x_coord : x_coord + x_size] += digit
-        boxes[box_idx] = [
-            x_coord + white_xs.min(),
-            y_coord + white_ys.min(),
-            x_coord + white_xs.max(),
-            y_coord + white_ys.max(),
-        ]
-        labels[box_idx] = digit_labels[idx]
+        image = put_digit(
+            image=image, digit=digit, center_coords=digit_center_coords
+        )
+        label = digit_labels[digit_idx]
+        bounding_box = calculate_box_coords(
+            digit=digit, center_coords=digit_center_coords
+        )
+        grid = mark_as_filled(
+            grid=grid,
+            image_size=image_size,
+            bounding_box=bounding_box,
+            threshold=cell_filled_threshold
+        )
+        labels[idx] = label
+        bounding_boxes[idx] = bounding_box
     image = np.clip(image, 0, 255)
-    return image.astype(np.uint8), boxes, labels
+    return image.astype(np.uint8), bounding_boxes, labels
 
 
 def generate_set(config: CfgNode, data: Dict[str, Tuple[np.ndarray, np.ndarray]]):
@@ -89,19 +188,24 @@ def generate_set(config: CfgNode, data: Dict[str, Tuple[np.ndarray, np.ndarray]]
             )
             boxes_set = h5set.create_dataset(
                 "boxes",
-                shape=(dataset_sizes[dataset], 4, 4),
-                chunks=(config.CHUNK_SIZE, 4, 4),
+                shape=(dataset_sizes[dataset], np.prod(config.GRID_SIZE), 4),
+                chunks=(config.CHUNK_SIZE, np.prod(config.GRID_SIZE), 4),
                 dtype=np.int,
             )
             labels_set = h5set.create_dataset(
                 "labels",
-                shape=(dataset_sizes[dataset], 4),
-                chunks=(config.CHUNK_SIZE, 4),
+                shape=(dataset_sizes[dataset], np.prod(config.GRID_SIZE)),
+                chunks=(config.CHUNK_SIZE, np.prod(config.GRID_SIZE)),
                 dtype=np.int,
             )
             for idx in trange(dataset_sizes[dataset]):
                 image, boxes, labels = generate_image_with_annotation(
-                    config=config, digits=digits, digit_labels=digit_labels
+                    digits=digits,
+                    digit_labels=digit_labels,
+                    grid_size=config.GRID_SIZE,
+                    image_size=config.IMAGE_SIZE,
+                    position_variance=config.POSITION_VARIANCE,
+                    cell_filled_threshold=config.CELL_FILLED_THRESHOLD,
                 )
                 images_set[idx] = image
                 boxes_set[idx] = boxes
