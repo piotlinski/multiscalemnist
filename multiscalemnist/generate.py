@@ -29,6 +29,33 @@ def random_cell(grid: np.ndarray) -> Optional[Tuple[int, int]]:
     return unfilled_inds[idx]
 
 
+def filled_margin(grid: np.ndarray, cell_index: Tuple[int, int]) -> Tuple[int, int]:
+    """ Get margin from nearest filled grid cell.
+
+    :param grid: array with zeros (empty cells) and ones (full cells)
+    :param cell_index: selected cell index to put digit in
+    :return: tuple of margins: (y, x)
+    """
+    filled_inds = np.argwhere(grid == 1)
+    y_filled_margin = min(
+        [
+            abs(cell_index[0] - filled_idx[0])
+            for filled_idx in filled_inds
+            if filled_idx[1] == cell_index[1]
+        ],
+        default=grid.shape[0],
+    )
+    x_filled_margin = min(
+        [
+            abs(cell_index[1] - filled_idx[1])
+            for filled_idx in filled_inds
+            if filled_idx[0] == cell_index[0]
+        ],
+        default=grid.shape[1],
+    )
+    return y_filled_margin, x_filled_margin
+
+
 def random_digit_size(
     grid: np.ndarray, cell_index: Tuple[int, int], position_variance: float
 ) -> int:
