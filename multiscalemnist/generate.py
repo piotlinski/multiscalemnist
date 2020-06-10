@@ -69,15 +69,31 @@ def image_margin(grid: np.ndarray, cell_index: Tuple[int, int]) -> Tuple[int, in
 
 
 def random_digit_size(
-    grid: np.ndarray, cell_index: Tuple[int, int], position_variance: float
+    grid: np.ndarray,
+    cell_index: Tuple[int, int],
+    cell_size: Tuple[int, int],
+    min_size: int,
 ) -> int:
     """ Get random digit size that will fit the given cell and its surroundings.
 
     :param grid: array with zeros (empty cells) and ones (full cells)
     :param cell_index: selected cell index to put digit in
-    :param position_variance: how much digit position may vary from cell center
+    :param cell_size: given cell size (height, width)
+    :param min_size: minimal size of returned digit
     :return: random digit size (pixels) that will fit in given place
     """
+    y_image_margin, x_image_margin = image_margin(grid=grid, cell_index=cell_index)
+    y_filled_margin, x_filled_margin = filled_margin(grid=grid, cell_index=cell_index)
+    margin = (
+        min(y_image_margin, y_filled_margin),
+        min(x_image_margin, x_filled_margin),
+    )
+    max_size = min(
+        int(cell_size[0] * (2 * margin[0] - 1)), int(cell_size[1] * (2 * margin[1] - 1))
+    )
+    if max_size < min_size:
+        return min_size
+    return np.random.randint(min_size, max_size)
 
 
 def calculate_center_coords(
@@ -173,7 +189,10 @@ def generate_image_with_annotation(
         if cell_idx is None:
             break
         digit_size = random_digit_size(
-            grid=grid, cell_index=cell_idx, position_variance=position_variance
+            grid=grid,
+            cell_index=cell_idx,
+            cell_size=cell_size,
+            min_size=digits.shape[-1:],
         )
         cell_center = calculate_center_coords(
             cell_index=cell_idx, grid_size=grid_size, image_size=image_size

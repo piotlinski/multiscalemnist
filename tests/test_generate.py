@@ -7,6 +7,7 @@ from multiscalemnist.generate import (
     image_margin,
     random_cell,
     random_coordinate,
+    random_digit_size,
 )
 
 
@@ -72,3 +73,28 @@ def test_image_margin(grid_size, cell_idx, expected):
     """Test image margin."""
     grid = np.zeros(grid_size)
     assert image_margin(grid, cell_idx) == expected
+
+
+@pytest.mark.parametrize("_iter", range(5))
+def test_random_digit_size(_iter):
+    """Verify drawing random digit size."""
+    grid = np.zeros((3, 3))
+    cell_index = (1, 1)
+    cell_size = (20, 20)
+    min_size = 5
+    digit_size = random_digit_size(
+        grid=grid, cell_index=cell_index, cell_size=cell_size, min_size=min_size,
+    )
+    assert min_size <= digit_size < 60
+
+
+def test_random_digit_size_too_small():
+    """Verify if min size returned when too small."""
+    grid = np.zeros((3, 3))
+    cell_index = (0, 0)
+    cell_size = (20, 20)
+    min_size = 28
+    digit_size = random_digit_size(
+        grid=grid, cell_index=cell_index, cell_size=cell_size, min_size=min_size,
+    )
+    assert digit_size == min_size
