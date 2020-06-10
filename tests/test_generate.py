@@ -2,7 +2,12 @@
 import numpy as np
 import pytest
 
-from multiscalemnist.generate import filled_margin, random_cell, random_coordinate
+from multiscalemnist.generate import (
+    filled_margin,
+    image_margin,
+    random_cell,
+    random_coordinate,
+)
 
 
 @pytest.mark.parametrize("min_val, max_val", [(0, 3), (5, 12), (120, 332)])
@@ -52,3 +57,18 @@ def test_filled_margin(nonzero, cell_idx, expected):
     for y_idx, x_idx in nonzero:
         grid[y_idx, x_idx] = 1
     assert filled_margin(grid, cell_idx) == expected
+
+
+@pytest.mark.parametrize(
+    "grid_size, cell_idx, expected",
+    [
+        ((3, 3), (1, 1), (2, 2)),
+        ((4, 5), (2, 1), (2, 2)),
+        ((9, 9), (2, 8), (3, 1)),
+        ((11, 11), (7, 0), (4, 1)),
+    ],
+)
+def test_image_margin(grid_size, cell_idx, expected):
+    """Test image margin."""
+    grid = np.zeros(grid_size)
+    assert image_margin(grid, cell_idx) == expected

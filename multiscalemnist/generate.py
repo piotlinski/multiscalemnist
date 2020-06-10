@@ -56,6 +56,18 @@ def filled_margin(grid: np.ndarray, cell_index: Tuple[int, int]) -> Tuple[int, i
     return y_filled_margin, x_filled_margin
 
 
+def image_margin(grid: np.ndarray, cell_index: Tuple[int, int]) -> Tuple[int, int]:
+    """ Get margin from grid border.
+
+    :param grid: array with zeros (empty cells) and ones (full cells)
+    :param cell_index: selected cell index to put digit in
+    :return: tuple of margins: (y, x)
+    """
+    y_border_margin = min(cell_index[0] + 1, grid.shape[0] - cell_index[0])
+    x_border_margin = min(cell_index[1] + 1, grid.shape[1] - cell_index[1])
+    return y_border_margin, x_border_margin
+
+
 def random_digit_size(
     grid: np.ndarray, cell_index: Tuple[int, int], position_variance: float
 ) -> int:
