@@ -97,15 +97,17 @@ def random_digit_size(
 
 
 def calculate_center_coords(
-    cell_index: Tuple[int, int], grid_size: Tuple[int, int], image_size: Tuple[int, int]
+    cell_index: Tuple[int, int], cell_size: Tuple[int, int]
 ) -> Tuple[int, int]:
     """ Calculate cell center coordinates.
 
     :param cell_index: selected cell index
-    :param grid_size: grid size (height, width)
-    :param image_size: image size (height, width)
+    :param cell_size: given cell size (height, width)
     :return: given cell center coordinates (y, x)
     """
+    y = int(cell_size[0] * (cell_index[0] + 0.5))
+    x = int(cell_size[1] * (cell_index[1] + 0.5))
+    return y, x
 
 
 def randomize_center_coords(
@@ -194,9 +196,7 @@ def generate_image_with_annotation(
             cell_size=cell_size,
             min_size=digits.shape[-1:],
         )
-        cell_center = calculate_center_coords(
-            cell_index=cell_idx, grid_size=grid_size, image_size=image_size
-        )
+        cell_center = calculate_center_coords(cell_index=cell_idx, cell_size=cell_size)
         digit_center_coords = randomize_center_coords(
             cell_center=cell_center,
             cell_size=cell_size,

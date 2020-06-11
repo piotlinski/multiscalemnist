@@ -3,6 +3,7 @@ import numpy as np
 import pytest
 
 from multiscalemnist.generate import (
+    calculate_center_coords,
     filled_margin,
     image_margin,
     random_cell,
@@ -98,3 +99,18 @@ def test_random_digit_size_too_small():
         grid=grid, cell_index=cell_index, cell_size=cell_size, min_size=min_size,
     )
     assert digit_size == min_size
+
+
+@pytest.mark.parametrize(
+    "cell_index, cell_size, expected",
+    [
+        ((0, 0), (20, 20), (10, 10)),
+        ((3, 2), (25, 10), (87, 25)),
+        ((10, 11), (28, 28), (294, 322)),
+    ],
+)
+def test_calculate_center_coords(cell_index, cell_size, expected):
+    """Verify cell center coords calculation."""
+    assert (
+        calculate_center_coords(cell_index=cell_index, cell_size=cell_size) == expected
+    )
