@@ -136,6 +136,9 @@ def calculate_box_coords(
     :param center_coords: coordinates to put digit center at
     :return: bounding box coordinates: central point, width, height
     """
+    y, x = center_coords
+    h, w = digit.shape
+    return x, y, w, h
 
 
 def put_digit(

@@ -3,6 +3,7 @@ import numpy as np
 import pytest
 
 from multiscalemnist.generate import (
+    calculate_box_coords,
     calculate_center_coords,
     filled_margin,
     image_margin,
@@ -121,7 +122,7 @@ def test_calculate_center_coords(cell_index, cell_size, expected):
     "cell_center, cell_size, position_variance, y_range, x_range",
     [
         ((150, 150), (20, 20), 0.5, (145, 155), (145, 155)),
-        ((127, 174), (60, 60), 0.8, (123, 151), (150, 198)),
+        ((127, 174), (60, 60), 0.8, (103, 151), (150, 198)),
     ],
 )
 def test_randomize_center_coords(
@@ -135,3 +136,13 @@ def test_randomize_center_coords(
     )
     assert y_range[0] <= y <= y_range[1]
     assert x_range[0] <= x <= x_range[1]
+
+
+@pytest.mark.parametrize(
+    "x, y, w, h", [(10, 12, 8, 6), (125, 43, 28, 28), (433, 674, 128, 128)]
+)
+def test_calculate_box_coords(x, y, w, h):
+    """Test calculating bounding box coordinates."""
+    image = np.zeros((h, w))
+    center_coords = (y, x)
+    assert calculate_box_coords(image, center_coords=center_coords) == (x, y, w, h)
