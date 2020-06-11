@@ -2,6 +2,14 @@
 
 MNIST dataset for detection with multiple scales.
 
+This package creates h5py dataset with images of adjustable size (see config), together
+with corner-form bounding boxes `(x0, y0, x1, y1)` and labels.
+
+Examples:
+
+![examples/1.png](examples/1.png) ![examples/2.png](examples/2.png)
+![examples/3.png](examples/3.png)
+
 ## Development
 
 Requirements:
