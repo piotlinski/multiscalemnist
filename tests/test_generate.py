@@ -1,4 +1,6 @@
 """Test MultiScaleMNIST generating."""
+from unittest.mock import call, patch
+
 import numpy as np
 import pytest
 
@@ -8,6 +10,7 @@ from multiscalemnist.generate import (
     calculate_center_coords,
     filled_margin,
     generate_image_with_annotation,
+    generate_set,
     image_margin,
     mark_as_filled,
     put_digit,
@@ -253,3 +256,18 @@ def test_generate_image_with_annotation(grid_size, image_size):
     assert image.shape == image_size
     assert boxes.shape[0] == labels.shape[0] == n_digits
     assert boxes.shape[1] == 4
+
+
+@patch("multiscalemnist.generate.h5py.File")
+def test_generating_entire_dataset(h5_mock, sample_config):
+    """Test generating entire dataset with H5."""
+    n_digits = np.prod(sample_config.GRID_SIZE)
+    digits = np.random.randint(0, 256, (n_digits, 28, 28), dtype=np.uint8)
+    digit_labels = np.random.randint(0, 10, (n_digits,), dtype=np.uint8)
+    data = {"train": (digits, digit_labels), "test": (digits, digit_labels)}
+    generate_set(sample_config, data)
+    enter_mock = h5_mock.return_value.__enter__
+    enter_mock.assert_called()
+    enter_mock.return_value.create_group.assert_has_calls(
+        [call("train"), call("test")], any_order=True
+    )
