@@ -146,14 +146,18 @@ def test_randomize_center_coords(
     assert x_range[0] <= x <= x_range[1]
 
 
+@pytest.mark.parametrize("x_center, y_center", [(50, 50), (120, 115), (174, 178)])
 @pytest.mark.parametrize(
-    "x, y, w, h", [(10, 12, 8, 6), (125, 43, 28, 28), (433, 674, 128, 128)]
+    "x0, y0, x1, y1", [(6, 14, 9, 15), (77, 53, 92, 65), (40, 20, 60, 40)]
 )
-def test_calculate_box_coords(x, y, w, h):
+def test_calculate_box_coords(x_center, y_center, x0, y0, x1, y1):
     """Test calculating bounding box coordinates."""
-    image = np.zeros((h, w))
-    center_coords = (y, x)
-    assert calculate_box_coords(image, center_coords=center_coords) == (x, y, w, h)
+    image = np.zeros((100, 100))
+    x = x_center - 50
+    y = y_center - 50
+    image[y0:y1, x0:x1] = 1
+    bounding_box = calculate_box_coords(image, center_coords=(y_center, x_center))
+    assert bounding_box == (x + x0, y + y0, x + x1 - 1, y + y1 - 1)
 
 
 @pytest.mark.parametrize(
@@ -198,11 +202,11 @@ def test_round_margin(margin, threshold, expected):
 @pytest.mark.parametrize(
     "bounding_box, grid_size, image_size, threshold, expected",
     [
-        ((10, 10, 10, 10), (8, 8), (80, 80), 0.8, ((1, 1), (1, 1))),
-        ((5, 5, 8, 8), (4, 4), (20, 20), 0.1, ((0, 2), (0, 2))),
-        ((95, 95, 10, 10), (5, 5), (100, 100), 0.5, ((4, 5), (4, 5))),
-        ((37, 28, 26, 34), (7, 7), (70, 70), 0.5, ((1, 4), (2, 5))),
-        ((37, 28, 26, 34), (7, 7), (70, 70), 0.3, ((1, 5), (2, 5))),
+        ((5, 5, 15, 15), (8, 8), (80, 80), 0.8, ((1, 1), (1, 1))),
+        ((1, 1, 9, 9), (4, 4), (20, 20), 0.1, ((0, 2), (0, 2))),
+        ((90, 90, 100, 100), (5, 5), (100, 100), 0.5, ((4, 5), (4, 5))),
+        ((24, 11, 50, 45), (7, 7), (70, 70), 0.5, ((1, 4), (2, 5))),
+        ((24, 11, 50, 45), (7, 7), (70, 70), 0.3, ((1, 5), (2, 5))),
     ],
 )
 def test_box_to_grid_ranges(bounding_box, image_size, grid_size, threshold, expected):
@@ -219,11 +223,11 @@ def test_box_to_grid_ranges(bounding_box, image_size, grid_size, threshold, expe
 @pytest.mark.parametrize(
     "grid_size, image_size, bounding_box, threshold, filled_ranges",
     [
-        ((8, 8), (80, 80), (10, 10, 10, 10), 0.0, ((0, 2), (0, 2))),
-        ((4, 4), (20, 20), (5, 5, 8, 8), 0.1, ((0, 2), (0, 2))),
-        ((5, 5), (100, 100), (95, 95, 10, 10), 0.5, ((4, 5), (4, 5))),
-        ((7, 7), (70, 70), (37, 28, 26, 34), 0.5, ((1, 4), (2, 5))),
-        ((7, 7), (70, 70), (37, 28, 26, 34), 0.3, ((1, 5), (2, 5))),
+        ((8, 8), (80, 80), (5, 5, 15, 15), 0.0, ((0, 2), (0, 2))),
+        ((4, 4), (20, 20), (1, 1, 9, 9), 0.1, ((0, 2), (0, 2))),
+        ((5, 5), (100, 100), (90, 90, 100, 100), 0.5, ((4, 5), (4, 5))),
+        ((7, 7), (70, 70), (24, 11, 50, 45), 0.5, ((1, 4), (2, 5))),
+        ((7, 7), (70, 70), (24, 11, 50, 45), 0.3, ((1, 5), (2, 5))),
     ],
 )
 def test_mark_as_filled(grid_size, image_size, bounding_box, threshold, filled_ranges):

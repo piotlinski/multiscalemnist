@@ -130,15 +130,21 @@ def randomize_center_coords(
 def calculate_box_coords(
     digit: np.ndarray, center_coords: Tuple[int, int]
 ) -> Tuple[int, int, int, int]:
-    """ Calculate bounding box coordinates (x, y, w, h).
+    """ Calculate bounding box coordinates (x0, y0, x1, y1).
 
     :param digit: single digit transformed image
     :param center_coords: coordinates to put digit center at
     :return: bounding box coordinates: central point, width, height
     """
-    y, x = center_coords
-    h, w = digit.shape
-    return x, y, w, h
+    y = center_coords[0] - digit.shape[0] // 2
+    x = center_coords[1] - digit.shape[1] // 2
+    white_ys, white_xs = np.where(digit > 0)
+    return (
+        x + white_xs.min(),
+        y + white_ys.min(),
+        x + white_xs.max(),
+        y + white_ys.max(),
+    )
 
 
 def put_digit(
@@ -192,25 +198,17 @@ def box_to_grid_ranges(
 ) -> Tuple[Tuple[int, int], Tuple[int, int]]:
     """ Get grid index ranges filled by bounding box.
 
-    :param bounding_box: digit bounding box (x, y, w, h)
+    :param bounding_box: digit bounding box (x0, y0, x1, y1)
     :param grid_size: tuple defining grid for digits
     :param image_size: output image size
     :param threshold: minimum part of cell obscured to mark as filled
     :return: tuple of ranges (min inclusive, max exclusive), obscured by bounding box
     """
-    x, y, w, h = bounding_box
-    y_min = round_margin(
-        grid_size[0] * (y - h / 2) / image_size[0], threshold=1 - threshold
-    )
-    y_max = round_margin(
-        grid_size[0] * (y + h / 2) / image_size[0], threshold=threshold
-    )
-    x_min = round_margin(
-        grid_size[1] * (x - w / 2) / image_size[1], threshold=1 - threshold
-    )
-    x_max = round_margin(
-        grid_size[1] * (x + w / 2) / image_size[1], threshold=threshold
-    )
+    x0, y0, x1, y1 = bounding_box
+    y_min = round_margin(grid_size[0] * y0 / image_size[0], threshold=1 - threshold)
+    y_max = round_margin(grid_size[0] * y1 / image_size[0], threshold=threshold)
+    x_min = round_margin(grid_size[1] * x0 / image_size[1], threshold=1 - threshold)
+    x_max = round_margin(grid_size[1] * x1 / image_size[1], threshold=threshold)
     return (y_min, y_max), (x_min, x_max)
 
 
@@ -224,7 +222,7 @@ def mark_as_filled(
 
     :param grid: given grid array
     :param image_size: output image size
-    :param bounding_box: inserted digit bounding box (x, y, w, h)
+    :param bounding_box: inserted digit bounding box (x0, y0, x1, y1)
     :param threshold: minimum part of cell obscured to mark as filled
     :return:
     """
