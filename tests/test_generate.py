@@ -7,6 +7,7 @@ from multiscalemnist.generate import (
     calculate_center_coords,
     filled_margin,
     image_margin,
+    put_digit,
     random_cell,
     random_coordinate,
     random_digit_size,
@@ -146,3 +147,33 @@ def test_calculate_box_coords(x, y, w, h):
     image = np.zeros((h, w))
     center_coords = (y, x)
     assert calculate_box_coords(image, center_coords=center_coords) == (x, y, w, h)
+
+
+@pytest.mark.parametrize(
+    "digit_size, center_coords",
+    [
+        ((10, 10), (8, 8)),
+        ((24, 32), (50, 50)),
+        ((5, 5), (12, 17)),
+        ((35, 53), (29, 13)),
+        ((20, 30), (90, 90)),
+    ],
+)
+def test_put_digit(digit_size, center_coords):
+    """Verify putting digit on an image."""
+    image = np.zeros((100, 100))
+    digit = np.ones(digit_size)
+    new_image = put_digit(image, digit, center_coords)
+    negative_y_incr = digit_size[0] // 2
+    negative_x_incr = digit_size[1] // 2
+    top_left_y = max(0, center_coords[0] - negative_y_incr)
+    top_left_x = max(0, center_coords[1] - negative_x_incr)
+    bottom_right_y = min(
+        image.shape[0], center_coords[0] + digit_size[0] - negative_y_incr
+    )
+    bottom_right_x = min(
+        image.shape[1], center_coords[1] + digit_size[1] - negative_x_incr
+    )
+    assert np.all(new_image[top_left_y:bottom_right_y, top_left_x:bottom_right_x] == 1)
+    new_image[top_left_y:bottom_right_y, top_left_x:bottom_right_x] = 0
+    assert np.all(new_image == image)

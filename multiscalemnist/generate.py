@@ -151,6 +151,23 @@ def put_digit(
     :param center_coords: coordinates where digit should be put
     :return: image with digit put on it
     """
+    result = image.copy()
+    y_min = center_coords[0] - digit.shape[0] // 2
+    y_max = y_min + digit.shape[0]
+    x_min = center_coords[1] - digit.shape[1] // 2
+    x_max = x_min + digit.shape[1]
+    digit_y_min = -min(0, y_min)
+    digit_y_max = digit.shape[0] - max(0, y_max - image.shape[0])
+    digit_x_min = -min(0, x_min)
+    digit_x_max = digit.shape[1] - max(0, x_max - image.shape[1])
+    image_y_min = max(0, y_min)
+    image_y_max = min(image.shape[0], y_max)
+    image_x_min = max(0, x_min)
+    image_x_max = min(image.shape[1], x_max)
+    result[image_y_min:image_y_max, image_x_min:image_x_max] += digit[
+        digit_y_min:digit_y_max, digit_x_min:digit_x_max
+    ]
+    return np.clip(result, 0, 255)
 
 
 def mark_as_filled(
