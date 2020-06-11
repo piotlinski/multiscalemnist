@@ -152,12 +152,25 @@ def test_randomize_center_coords(
 )
 def test_calculate_box_coords(x_center, y_center, x0, y0, x1, y1):
     """Test calculating bounding box coordinates."""
-    image = np.zeros((100, 100))
+    image_size = (250, 250)
+    digit = np.zeros((100, 100))
     x = x_center - 50
     y = y_center - 50
-    image[y0:y1, x0:x1] = 1
-    bounding_box = calculate_box_coords(image, center_coords=(y_center, x_center))
+    digit[y0:y1, x0:x1] = 1
+    bounding_box = calculate_box_coords(
+        digit, center_coords=(y_center, x_center), image_size=image_size
+    )
     assert bounding_box == (x + x0, y + y0, x + x1 - 1, y + y1 - 1)
+
+
+def test_clipping_box_coords():
+    """Test if incorrect bounding boxes are clipped."""
+    image_size = (100, 100)
+    digit = np.ones((120, 120))
+    bounding_box = calculate_box_coords(
+        digit, center_coords=(50, 50), image_size=image_size
+    )
+    assert bounding_box == (0, 0, 99, 99)
 
 
 @pytest.mark.parametrize(
