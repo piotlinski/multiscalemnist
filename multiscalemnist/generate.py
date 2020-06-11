@@ -170,8 +170,8 @@ def put_digit(
     return np.clip(result, 0, 255)
 
 
-def mark_margin(margin: float, threshold: float) -> int:
-    """ Get mark margin (round margin according to threshold)
+def round_margin(margin: float, threshold: float) -> int:
+    """ Round margin according to threshold
 
     :param margin: calculated margin
     :param threshold: threshold for rounding
@@ -198,6 +198,20 @@ def box_to_grid_ranges(
     :param threshold: minimum part of cell obscured to mark as filled
     :return: tuple of ranges (min inclusive, max exclusive), obscured by bounding box
     """
+    x, y, w, h = bounding_box
+    y_min = round_margin(
+        grid_size[0] * (y - h / 2) / image_size[0], threshold=1 - threshold
+    )
+    y_max = round_margin(
+        grid_size[0] * (y + h / 2) / image_size[0], threshold=threshold
+    )
+    x_min = round_margin(
+        grid_size[1] * (x - w / 2) / image_size[1], threshold=1 - threshold
+    )
+    x_max = round_margin(
+        grid_size[1] * (x + w / 2) / image_size[1], threshold=threshold
+    )
+    return (y_min, y_max), (x_min, x_max)
 
 
 def mark_as_filled(

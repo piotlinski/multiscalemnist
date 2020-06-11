@@ -3,16 +3,17 @@ import numpy as np
 import pytest
 
 from multiscalemnist.generate import (
+    box_to_grid_ranges,
     calculate_box_coords,
     calculate_center_coords,
     filled_margin,
     image_margin,
-    mark_margin,
     put_digit,
     random_cell,
     random_coordinate,
     random_digit_size,
     randomize_center_coords,
+    round_margin,
 )
 
 
@@ -164,7 +165,7 @@ def test_put_digit(digit_size, center_coords):
     """Verify putting digit on an image."""
     image = np.zeros((100, 100))
     digit = np.ones(digit_size)
-    new_image = put_digit(image, digit, center_coords)
+    new_image = put_digit(image=image, digit=digit, center_coords=center_coords)
     negative_y_incr = digit_size[0] // 2
     negative_x_incr = digit_size[1] // 2
     top_left_y = max(0, center_coords[0] - negative_y_incr)
@@ -182,8 +183,28 @@ def test_put_digit(digit_size, center_coords):
 
 @pytest.mark.parametrize(
     "margin, threshold, expected",
-    [(2.3, 0.5, 2), (2.7, 0.5, 3), (13.6, 13.6, 13), (27.3, 0.2, 28)],
+    [(2.3, 0.5, 2), (4.7, 0.5, 5), (13.6, 0.6, 13), (27.3, 0.2, 28)],
 )
-def test_mark_margin(margin, threshold, expected):
+def test_round_margin(margin, threshold, expected):
     """Test rounding mark margin."""
-    assert mark_margin(margin, threshold) == expected
+    assert round_margin(margin=margin, threshold=threshold) == expected
+
+
+@pytest.mark.parametrize(
+    "bounding_box, grid_size, image_size, threshold, expected",
+    [
+        ((5, 5, 8, 8), (4, 4), (20, 20), 0.1, ((0, 2), (0, 2))),
+        ((95, 95, 10, 10), (5, 5), (100, 100), 0.5, ((4, 5), (4, 5))),
+        ((37, 28, 26, 34), (7, 7), (70, 70), 0.5, ((1, 4), (2, 5))),
+        ((37, 28, 26, 34), (7, 7), (70, 70), 0.3, ((1, 5), (2, 5))),
+    ],
+)
+def test_box_to_grid_ranges(bounding_box, image_size, grid_size, threshold, expected):
+    """Test getting obscured grid ranges from bounding box."""
+    ranges = box_to_grid_ranges(
+        bounding_box=bounding_box,
+        grid_size=grid_size,
+        image_size=image_size,
+        threshold=threshold,
+    )
+    assert ranges == expected
