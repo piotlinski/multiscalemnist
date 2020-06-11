@@ -128,22 +128,23 @@ def randomize_center_coords(
 
 
 def calculate_box_coords(
-    digit: np.ndarray, center_coords: Tuple[int, int]
+    digit: np.ndarray, center_coords: Tuple[int, int], image_size: Tuple[int, int]
 ) -> Tuple[int, int, int, int]:
     """ Calculate bounding box coordinates (x0, y0, x1, y1).
 
     :param digit: single digit transformed image
     :param center_coords: coordinates to put digit center at
+    :param image_size: image size used to clip coordinates
     :return: bounding box coordinates: central point, width, height
     """
     y = center_coords[0] - digit.shape[0] // 2
     x = center_coords[1] - digit.shape[1] // 2
     white_ys, white_xs = np.where(digit > 0)
     return (
-        x + white_xs.min(),
-        y + white_ys.min(),
-        x + white_xs.max(),
-        y + white_ys.max(),
+        max(x + white_xs.min(), 0),
+        max(y + white_ys.min(), 0),
+        min(x + white_xs.max(), image_size[1] - 1),
+        min(y + white_ys.max(), image_size[0] - 1),
     )
 
 
@@ -288,7 +289,7 @@ def generate_image_with_annotation(
         image = put_digit(image=image, digit=digit, center_coords=digit_center_coords)
         label = digit_labels[digit_idx]
         bounding_box = calculate_box_coords(
-            digit=digit, center_coords=digit_center_coords
+            digit=digit, center_coords=digit_center_coords, image_size=image_size
         )
         grid = mark_as_filled(
             grid=grid,
