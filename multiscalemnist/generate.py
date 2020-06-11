@@ -93,7 +93,7 @@ def random_digit_size(
     )
     if max_size < min_size:
         return min_size
-    return np.random.randint(min_size, max_size)
+    return int(np.random.beta(a=1, b=1) * (max_size - min_size) + min_size)
 
 
 def calculate_center_coords(
@@ -242,6 +242,7 @@ def generate_image_with_annotation(
     digit_labels: np.ndarray,
     grid_size: Tuple[int, int],
     image_size: Tuple[int, int],
+    min_digit_size: int,
     position_variance: float,
     cell_filled_threshold: float,
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -251,6 +252,7 @@ def generate_image_with_annotation(
     :param digit_labels: numpy array with digit labels
     :param grid_size: tuple defining grid for digits
     :param image_size: output image size (height, width)
+    :param min_digit_size: min size of a digit
     :param position_variance: how much digit position may vary from cell center
     :param cell_filled_threshold: minimum proportion to mark grid cell as filled
     :return: tuple: image, bounding boxes and labels
@@ -270,7 +272,7 @@ def generate_image_with_annotation(
             grid=grid,
             cell_index=cell_idx,
             cell_size=cell_size,
-            min_size=digits.shape[-1],
+            min_size=min_digit_size,
         )
         cell_center = calculate_center_coords(cell_index=cell_idx, cell_size=cell_size)
         digit_center_coords = randomize_center_coords(
@@ -337,6 +339,7 @@ def generate_set(config: CfgNode, data: Dict[str, Tuple[np.ndarray, np.ndarray]]
                     digit_labels=digit_labels,
                     grid_size=config.GRID_SIZE,
                     image_size=config.IMAGE_SIZE,
+                    min_digit_size=config.MIN_DIGIT_SIZE,
                     position_variance=config.POSITION_VARIANCE,
                     cell_filled_threshold=config.CELL_FILLED_THRESHOLD,
                 )

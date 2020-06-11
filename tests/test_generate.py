@@ -254,6 +254,7 @@ def test_generate_image_with_annotation(grid_size, image_size):
         digit_labels=digit_labels,
         grid_size=grid_size,
         image_size=image_size,
+        min_digit_size=32,
         position_variance=0.5,
         cell_filled_threshold=0.5,
     )
