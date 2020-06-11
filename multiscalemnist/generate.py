@@ -170,6 +170,36 @@ def put_digit(
     return np.clip(result, 0, 255)
 
 
+def mark_margin(margin: float, threshold: float) -> int:
+    """ Get mark margin (round margin according to threshold)
+
+    :param margin: calculated margin
+    :param threshold: threshold for rounding
+    :return: rounded margin
+    """
+    root = int(margin)
+    if threshold < margin - root:
+        return root + 1
+    else:
+        return root
+
+
+def box_to_grid_ranges(
+    bounding_box: Tuple[int, int, int, int],
+    grid_size: Tuple[int, int],
+    image_size: Tuple[int, int],
+    threshold: float,
+) -> Tuple[Tuple[int, int], Tuple[int, int]]:
+    """ Get grid index ranges filled by bounding box.
+
+    :param bounding_box: digit bounding box (x, y, w, h)
+    :param grid_size: tuple defining grid for digits
+    :param image_size: output image size
+    :param threshold: minimum part of cell obscured to mark as filled
+    :return: tuple of ranges (min inclusive, max exclusive), obscured by bounding box
+    """
+
+
 def mark_as_filled(
     grid: np.ndarray,
     image_size: Tuple[int, int],

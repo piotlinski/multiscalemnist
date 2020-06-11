@@ -7,6 +7,7 @@ from multiscalemnist.generate import (
     calculate_center_coords,
     filled_margin,
     image_margin,
+    mark_margin,
     put_digit,
     random_cell,
     random_coordinate,
@@ -177,3 +178,12 @@ def test_put_digit(digit_size, center_coords):
     assert np.all(new_image[top_left_y:bottom_right_y, top_left_x:bottom_right_x] == 1)
     new_image[top_left_y:bottom_right_y, top_left_x:bottom_right_x] = 0
     assert np.all(new_image == image)
+
+
+@pytest.mark.parametrize(
+    "margin, threshold, expected",
+    [(2.3, 0.5, 2), (2.7, 0.5, 3), (13.6, 13.6, 13), (27.3, 0.2, 28)],
+)
+def test_mark_margin(margin, threshold, expected):
+    """Test rounding mark margin."""
+    assert mark_margin(margin, threshold) == expected
