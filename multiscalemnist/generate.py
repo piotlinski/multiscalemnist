@@ -120,6 +120,11 @@ def randomize_center_coords(
     :param position_variance: maximum position variance
     :return: digit center coordinates
     """
+    y_incr = int(cell_size[0] * position_variance / 2)
+    x_incr = int(cell_size[1] * position_variance / 2)
+    y = random_coordinate(cell_center[0] - y_incr, cell_center[0] + y_incr)
+    x = random_coordinate(cell_center[1] - x_incr, cell_center[1] + x_incr)
+    return y, x
 
 
 def calculate_box_coords(

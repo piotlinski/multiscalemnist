@@ -9,6 +9,7 @@ from multiscalemnist.generate import (
     random_cell,
     random_coordinate,
     random_digit_size,
+    randomize_center_coords,
 )
 
 
@@ -114,3 +115,23 @@ def test_calculate_center_coords(cell_index, cell_size, expected):
     assert (
         calculate_center_coords(cell_index=cell_index, cell_size=cell_size) == expected
     )
+
+
+@pytest.mark.parametrize(
+    "cell_center, cell_size, position_variance, y_range, x_range",
+    [
+        ((150, 150), (20, 20), 0.5, (145, 155), (145, 155)),
+        ((127, 174), (60, 60), 0.8, (123, 151), (150, 198)),
+    ],
+)
+def test_randomize_center_coords(
+    cell_center, cell_size, position_variance, y_range, x_range
+):
+    """Verify if randomized center coords fit expected range."""
+    y, x = randomize_center_coords(
+        cell_center=cell_center,
+        cell_size=cell_size,
+        position_variance=position_variance,
+    )
+    assert y_range[0] <= y <= y_range[1]
+    assert x_range[0] <= x <= x_range[1]
