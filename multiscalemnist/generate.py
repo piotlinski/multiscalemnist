@@ -228,6 +228,15 @@ def mark_as_filled(
     :param threshold: minimum part of cell obscured to mark as filled
     :return:
     """
+    result = grid.copy()
+    (y_min, y_max), (x_min, x_max) = box_to_grid_ranges(
+        bounding_box=bounding_box,
+        grid_size=grid.shape,
+        image_size=image_size,
+        threshold=threshold,
+    )
+    result[y_min:y_max, x_min:x_max] = 1
+    return result
 
 
 def generate_image_with_annotation(

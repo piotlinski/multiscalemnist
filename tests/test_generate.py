@@ -8,6 +8,7 @@ from multiscalemnist.generate import (
     calculate_center_coords,
     filled_margin,
     image_margin,
+    mark_as_filled,
     put_digit,
     random_cell,
     random_coordinate,
@@ -193,6 +194,7 @@ def test_round_margin(margin, threshold, expected):
 @pytest.mark.parametrize(
     "bounding_box, grid_size, image_size, threshold, expected",
     [
+        ((10, 10, 10, 10), (8, 8), (80, 80), 0.8, ((1, 1), (1, 1))),
         ((5, 5, 8, 8), (4, 4), (20, 20), 0.1, ((0, 2), (0, 2))),
         ((95, 95, 10, 10), (5, 5), (100, 100), 0.5, ((4, 5), (4, 5))),
         ((37, 28, 26, 34), (7, 7), (70, 70), 0.5, ((1, 4), (2, 5))),
@@ -208,3 +210,23 @@ def test_box_to_grid_ranges(bounding_box, image_size, grid_size, threshold, expe
         threshold=threshold,
     )
     assert ranges == expected
+
+
+@pytest.mark.parametrize(
+    "grid_size, image_size, bounding_box, threshold, filled_ranges",
+    [
+        ((8, 8), (80, 80), (10, 10, 10, 10), 0.0, ((0, 2), (0, 2))),
+        ((4, 4), (20, 20), (5, 5, 8, 8), 0.1, ((0, 2), (0, 2))),
+        ((5, 5), (100, 100), (95, 95, 10, 10), 0.5, ((4, 5), (4, 5))),
+        ((7, 7), (70, 70), (37, 28, 26, 34), 0.5, ((1, 4), (2, 5))),
+        ((7, 7), (70, 70), (37, 28, 26, 34), 0.3, ((1, 5), (2, 5))),
+    ],
+)
+def test_mark_as_filled(grid_size, image_size, bounding_box, threshold, filled_ranges):
+    """Verify marking grid as filled."""
+    grid = np.zeros(grid_size)
+    filled_grid = mark_as_filled(grid, image_size, bounding_box, threshold)
+    ((y_min, y_max), (x_min, x_max)) = filled_ranges
+    assert np.all(filled_grid[y_min:y_max, x_min:x_max] == 1)
+    filled_grid[y_min:y_max, x_min:x_max] = 0
+    assert np.all(filled_grid == grid)
