@@ -7,6 +7,7 @@ from multiscalemnist.generate import (
     calculate_box_coords,
     calculate_center_coords,
     filled_margin,
+    generate_image_with_annotation,
     image_margin,
     mark_as_filled,
     put_digit,
@@ -230,3 +231,25 @@ def test_mark_as_filled(grid_size, image_size, bounding_box, threshold, filled_r
     assert np.all(filled_grid[y_min:y_max, x_min:x_max] == 1)
     filled_grid[y_min:y_max, x_min:x_max] = 0
     assert np.all(filled_grid == grid)
+
+
+@pytest.mark.parametrize(
+    "grid_size, image_size",
+    [((3, 3), (100, 100)), ((8, 8), (64, 64)), ((5, 8), (40, 64))],
+)
+def test_generate_image_with_annotation(grid_size, image_size):
+    """Test generating image with annotation."""
+    n_digits = np.prod(grid_size)
+    digits = np.random.randint(0, 256, (n_digits, 28, 28), dtype=np.uint8)
+    digit_labels = np.random.randint(0, 10, (n_digits,), dtype=np.uint8)
+    image, boxes, labels = generate_image_with_annotation(
+        digits=digits,
+        digit_labels=digit_labels,
+        grid_size=grid_size,
+        image_size=image_size,
+        position_variance=0.5,
+        cell_filled_threshold=0.5,
+    )
+    assert image.shape == image_size
+    assert boxes.shape[0] == labels.shape[0] == n_digits
+    assert boxes.shape[1] == 4

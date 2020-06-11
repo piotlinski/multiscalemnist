@@ -272,7 +272,7 @@ def generate_image_with_annotation(
             grid=grid,
             cell_index=cell_idx,
             cell_size=cell_size,
-            min_size=digits.shape[-1:],
+            min_size=digits.shape[-1],
         )
         cell_center = calculate_center_coords(cell_index=cell_idx, cell_size=cell_size)
         digit_center_coords = randomize_center_coords(
