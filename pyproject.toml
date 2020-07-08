@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "multiscalemnist"
-version = "0.2.1"
+version = "0.3.0"
 description = "MNIST dataset for detection with multiple scales"
 authors = ["PiotrJZielinski <piotrekzie100@gmail.com>"]
 packages = [
