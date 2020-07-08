@@ -1,6 +1,7 @@
 """Generate MultiScaleMNIST dataset."""
 import logging
-from typing import Dict, Optional, Tuple
+from itertools import cycle
+from typing import Dict, Iterator, Optional, Tuple
 
 import cv2
 import h5py
@@ -239,8 +240,8 @@ def mark_as_filled(
 
 
 def generate_image_with_annotation(
-    digits: np.ndarray,
-    digit_labels: np.ndarray,
+    digits: Iterator[np.ndarray],
+    digit_labels: Iterator[np.ndarray],
     grid_sizes: Tuple[Tuple[int, int], ...],
     image_size: Tuple[int, int],
     min_digit_size: int,
@@ -249,8 +250,8 @@ def generate_image_with_annotation(
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """ Generate image with digits put in a grid of given size.
 
-    :param digits: numpy array with digits to put on the image
-    :param digit_labels: numpy array with digit labels
+    :param digits: numpy array iterable with digits to put on the image
+    :param digit_labels: numpy array iterable with digit labels
     :param grid_sizes: tuple defining available grids for digits
     :param image_size: output image size (height, width)
     :param min_digit_size: min size of a digit
@@ -267,8 +268,7 @@ def generate_image_with_annotation(
     labels = np.full(max_digits, -1)
     cell_size = image_size[0] // grid_size[0], image_size[1] // grid_size[1]
     n_digits = np.random.randint(np.prod(grid_size) // 2, np.prod(grid_size) + 1)
-    indices = np.random.choice(np.arange(len(digit_labels)), n_digits, replace=False)
-    for idx, digit_idx in enumerate(indices):
+    for idx in range(n_digits):
         cell_idx = random_cell(grid)
         if cell_idx is None:
             break
@@ -285,12 +285,10 @@ def generate_image_with_annotation(
             position_variance=position_variance,
         )
         digit = cv2.resize(
-            digits[digit_idx],
-            dsize=(digit_size, digit_size),
-            interpolation=cv2.INTER_CUBIC,
+            next(digits), dsize=(digit_size, digit_size), interpolation=cv2.INTER_CUBIC,
         )
         image = put_digit(image=image, digit=digit, center_coords=digit_center_coords)
-        label = digit_labels[digit_idx]
+        label = next(digit_labels)
         bounding_box = calculate_box_coords(
             digit=digit, center_coords=digit_center_coords, image_size=image_size
         )
@@ -313,6 +311,9 @@ def generate_set(config: CfgNode, data: Dict[str, Tuple[np.ndarray, np.ndarray]]
         dataset_sizes = {"train": config.TRAIN_LENGTH, "test": config.TEST_LENGTH}
         for dataset in ["train", "test"]:
             digits, digit_labels = data[dataset]
+            indices = np.random.permutation(len(digit_labels))
+            digits_iter = cycle(digits[indices])
+            digit_labels_iter = cycle(digit_labels[indices])
             logger.info(
                 "Creating %s dataset in file %s with %d entries",
                 dataset,
@@ -340,8 +341,8 @@ def generate_set(config: CfgNode, data: Dict[str, Tuple[np.ndarray, np.ndarray]]
             )
             for idx in trange(dataset_sizes[dataset]):
                 image, boxes, labels = generate_image_with_annotation(
-                    digits=digits,
-                    digit_labels=digit_labels,
+                    digits=digits_iter,
+                    digit_labels=digit_labels_iter,
                     grid_sizes=config.GRID_SIZES,
                     image_size=config.IMAGE_SIZE,
                     min_digit_size=config.MIN_DIGIT_SIZE,

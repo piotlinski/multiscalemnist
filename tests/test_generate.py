@@ -264,8 +264,8 @@ def test_mark_as_filled(grid_size, image_size, bounding_box, threshold, filled_r
 def test_generate_image_with_annotation(grid_sizes, image_size):
     """Test generating image with annotation."""
     n_digits = max([np.prod(grid_size) for grid_size in grid_sizes])
-    digits = np.random.randint(0, 256, (n_digits, 28, 28), dtype=np.uint8)
-    digit_labels = np.random.randint(0, 10, (n_digits,), dtype=np.uint8)
+    digits = iter(np.random.randint(0, 256, (n_digits, 28, 28), dtype=np.uint8))
+    digit_labels = iter(np.random.randint(0, 10, (n_digits,), dtype=np.uint8))
     image, boxes, labels = generate_image_with_annotation(
         digits=digits,
         digit_labels=digit_labels,
