@@ -258,12 +258,13 @@ def generate_image_with_annotation(
     :param cell_filled_threshold: minimum proportion to mark grid cell as filled
     :return: tuple: image, bounding boxes and labels
     """
+    max_digits = max([np.prod(grid) for grid in grid_sizes])
     grid_size_idx = np.random.choice(range(len(grid_sizes)))
     grid_size = grid_sizes[grid_size_idx]
     grid = np.zeros(grid_size)
     image = np.zeros(image_size)
-    bounding_boxes = np.full((np.prod(grid_size), 4), -1)
-    labels = np.full(np.prod(grid_size), -1)
+    bounding_boxes = np.full((max_digits, 4), -1)
+    labels = np.full(max_digits, -1)
     cell_size = image_size[0] // grid_size[0], image_size[1] // grid_size[1]
     n_digits = np.random.randint(np.prod(grid_size) // 2, np.prod(grid_size) + 1)
     indices = np.random.choice(np.arange(len(digit_labels)), n_digits, replace=False)
