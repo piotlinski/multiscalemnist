@@ -241,7 +241,7 @@ def mark_as_filled(
 def generate_image_with_annotation(
     digits: np.ndarray,
     digit_labels: np.ndarray,
-    grid_size: Tuple[int, int],
+    grid_sizes: Tuple[Tuple[int, int], ...],
     image_size: Tuple[int, int],
     min_digit_size: int,
     position_variance: float,
@@ -251,13 +251,15 @@ def generate_image_with_annotation(
 
     :param digits: numpy array with digits to put on the image
     :param digit_labels: numpy array with digit labels
-    :param grid_size: tuple defining grid for digits
+    :param grid_sizes: tuple defining available grids for digits
     :param image_size: output image size (height, width)
     :param min_digit_size: min size of a digit
     :param position_variance: how much digit position may vary from cell center
     :param cell_filled_threshold: minimum proportion to mark grid cell as filled
     :return: tuple: image, bounding boxes and labels
     """
+    grid_size_idx = np.random.choice(range(len(grid_sizes)))
+    grid_size = grid_sizes[grid_size_idx]
     grid = np.zeros(grid_size)
     image = np.zeros(image_size)
     bounding_boxes = np.full((np.prod(grid_size), 4), -1)
@@ -305,6 +307,7 @@ def generate_image_with_annotation(
 
 def generate_set(config: CfgNode, data: Dict[str, Tuple[np.ndarray, np.ndarray]]):
     """Generate entire dataset of MultiScaleMNIST."""
+    max_digits = max([np.prod(grid) for grid in config.GRID_SIZES])
     with h5py.File(config.FILE_NAME, mode="w") as f:
         dataset_sizes = {"train": config.TRAIN_LENGTH, "test": config.TEST_LENGTH}
         for dataset in ["train", "test"]:
@@ -324,21 +327,21 @@ def generate_set(config: CfgNode, data: Dict[str, Tuple[np.ndarray, np.ndarray]]
             )
             boxes_set = h5set.create_dataset(
                 "boxes",
-                shape=(dataset_sizes[dataset], np.prod(config.GRID_SIZE), 4),
-                chunks=(config.CHUNK_SIZE, np.prod(config.GRID_SIZE), 4),
+                shape=(dataset_sizes[dataset], max_digits, 4),
+                chunks=(config.CHUNK_SIZE, max_digits, 4),
                 dtype=np.int,
             )
             labels_set = h5set.create_dataset(
                 "labels",
-                shape=(dataset_sizes[dataset], np.prod(config.GRID_SIZE)),
-                chunks=(config.CHUNK_SIZE, np.prod(config.GRID_SIZE)),
+                shape=(dataset_sizes[dataset], max_digits),
+                chunks=(config.CHUNK_SIZE, max_digits),
                 dtype=np.int,
             )
             for idx in trange(dataset_sizes[dataset]):
                 image, boxes, labels = generate_image_with_annotation(
                     digits=digits,
                     digit_labels=digit_labels,
-                    grid_size=config.GRID_SIZE,
+                    grid_sizes=config.GRID_SIZES,
                     image_size=config.IMAGE_SIZE,
                     min_digit_size=config.MIN_DIGIT_SIZE,
                     position_variance=config.POSITION_VARIANCE,

@@ -254,18 +254,22 @@ def test_mark_as_filled(grid_size, image_size, bounding_box, threshold, filled_r
 
 
 @pytest.mark.parametrize(
-    "grid_size, image_size",
-    [((3, 3), (100, 100)), ((8, 8), (64, 64)), ((5, 8), (40, 64))],
+    "grid_sizes, image_size",
+    [
+        (((3, 3), (2, 2)), (100, 100)),
+        (((8, 8),), (64, 64)),
+        (((5, 8), (2, 4)), (40, 64)),
+    ],
 )
-def test_generate_image_with_annotation(grid_size, image_size):
+def test_generate_image_with_annotation(grid_sizes, image_size):
     """Test generating image with annotation."""
-    n_digits = np.prod(grid_size)
+    n_digits = max([np.prod(grid_size) for grid_size in grid_sizes])
     digits = np.random.randint(0, 256, (n_digits, 28, 28), dtype=np.uint8)
     digit_labels = np.random.randint(0, 10, (n_digits,), dtype=np.uint8)
     image, boxes, labels = generate_image_with_annotation(
         digits=digits,
         digit_labels=digit_labels,
-        grid_size=grid_size,
+        grid_sizes=grid_sizes,
         image_size=image_size,
         min_digit_size=32,
         position_variance=0.5,
@@ -279,7 +283,7 @@ def test_generate_image_with_annotation(grid_size, image_size):
 @patch("multiscalemnist.generate.h5py.File")
 def test_generating_entire_dataset(h5_mock, sample_config):
     """Test generating entire dataset with H5."""
-    n_digits = np.prod(sample_config.GRID_SIZE)
+    n_digits = max([np.prod(grid) for grid in sample_config.GRID_SIZES])
     digits = np.random.randint(0, 256, (n_digits, 28, 28), dtype=np.uint8)
     digit_labels = np.random.randint(0, 10, (n_digits,), dtype=np.uint8)
     data = {"train": (digits, digit_labels), "test": (digits, digit_labels)}
