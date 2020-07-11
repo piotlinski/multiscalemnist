@@ -326,8 +326,8 @@ def generate_set(config: CfgNode, data: Dict[str, Tuple[np.ndarray, np.ndarray]]
             h5set = f.create_group(dataset)
             images_set = h5set.create_dataset(
                 "images",
-                shape=(dataset_sizes[dataset], *config.IMAGE_SIZE),
-                chunks=(config.CHUNK_SIZE, *config.IMAGE_SIZE),
+                shape=(dataset_sizes[dataset], *config.IMAGE_SIZE, config.N_CHANNELS),
+                chunks=(config.CHUNK_SIZE, *config.IMAGE_SIZE, config.N_CHANNELS),
                 dtype=np.uint8,
             )
             boxes_set = h5set.create_dataset(
