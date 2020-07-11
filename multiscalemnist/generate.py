@@ -244,6 +244,7 @@ def generate_image_with_annotation(
     digit_labels: Iterator[np.ndarray],
     grid_sizes: Tuple[Tuple[int, int], ...],
     image_size: Tuple[int, int],
+    n_channels: int,
     min_digit_size: int,
     position_variance: float,
     cell_filled_threshold: float,
@@ -254,6 +255,7 @@ def generate_image_with_annotation(
     :param digit_labels: numpy array iterable with digit labels
     :param grid_sizes: tuple defining available grids for digits
     :param image_size: output image size (height, width)
+    :param n_channels: number of output channels
     :param min_digit_size: min size of a digit
     :param position_variance: how much digit position may vary from cell center
     :param cell_filled_threshold: minimum proportion to mark grid cell as filled
@@ -300,8 +302,9 @@ def generate_image_with_annotation(
         )
         labels[idx] = label
         bounding_boxes[idx] = bounding_box
-    image = np.clip(image, 0, 255)
-    return image.astype(np.uint8), bounding_boxes, labels
+    image = np.clip(image, 0, 255).astype(np.uint8)
+    image = np.dstack(n_channels * (image,))
+    return image, bounding_boxes, labels
 
 
 def generate_set(config: CfgNode, data: Dict[str, Tuple[np.ndarray, np.ndarray]]):
@@ -345,6 +348,7 @@ def generate_set(config: CfgNode, data: Dict[str, Tuple[np.ndarray, np.ndarray]]
                     digit_labels=digit_labels_iter,
                     grid_sizes=config.GRID_SIZES,
                     image_size=config.IMAGE_SIZE,
+                    n_channels=config.N_CHANNELS,
                     min_digit_size=config.MIN_DIGIT_SIZE,
                     position_variance=config.POSITION_VARIANCE,
                     cell_filled_threshold=config.CELL_FILLED_THRESHOLD,
