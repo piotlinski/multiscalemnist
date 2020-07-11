@@ -254,14 +254,14 @@ def test_mark_as_filled(grid_size, image_size, bounding_box, threshold, filled_r
 
 
 @pytest.mark.parametrize(
-    "grid_sizes, image_size",
+    "grid_sizes, image_size, n_channels",
     [
-        (((3, 3), (2, 2)), (100, 100)),
-        (((8, 8),), (64, 64)),
-        (((5, 8), (2, 4)), (40, 64)),
+        (((3, 3), (2, 2)), (100, 100), 1),
+        (((8, 8),), (64, 64), 3),
+        (((5, 8), (2, 4)), (40, 64), 5),
     ],
 )
-def test_generate_image_with_annotation(grid_sizes, image_size):
+def test_generate_image_with_annotation(grid_sizes, image_size, n_channels):
     """Test generating image with annotation."""
     n_digits = max([np.prod(grid_size) for grid_size in grid_sizes])
     digits = iter(np.random.randint(0, 256, (n_digits, 28, 28), dtype=np.uint8))
@@ -271,11 +271,12 @@ def test_generate_image_with_annotation(grid_sizes, image_size):
         digit_labels=digit_labels,
         grid_sizes=grid_sizes,
         image_size=image_size,
+        n_channels=n_channels,
         min_digit_size=32,
         position_variance=0.5,
         cell_filled_threshold=0.5,
     )
-    assert image.shape == image_size
+    assert image.shape == (*image_size, n_channels)
     assert boxes.shape[0] == labels.shape[0] == n_digits
     assert boxes.shape[1] == 4
 

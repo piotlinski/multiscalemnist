@@ -11,12 +11,13 @@ logger = logging.getLogger(__name__)
 _C = CfgNode()
 _C.FILE_NAME = "multiscalemnist.h5"
 _C.IMAGE_SIZE = (512, 512)
+_C.N_CHANNELS = 3
 _C.GRID_SIZES = (3, 3), (2, 2)
 _C.MIN_DIGIT_SIZE = 64
 _C.POSITION_VARIANCE = 0.6
 _C.CELL_FILLED_THRESHOLD = 0.4
-_C.TRAIN_LENGTH = 120_000
-_C.TEST_LENGTH = 60_000
+_C.TRAIN_LENGTH = 40_000
+_C.TEST_LENGTH = 4_000
 _C.CHUNK_SIZE = 32
 
 
