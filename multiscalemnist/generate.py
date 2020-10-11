@@ -310,9 +310,9 @@ def generate_image_with_annotation(
 def generate_set(config: CfgNode, data: Dict[str, Tuple[np.ndarray, np.ndarray]]):
     """Generate entire dataset of MultiScaleMNIST."""
     max_digits = max([np.prod(grid) for grid in config.GRID_SIZES])
-    with h5py.File(config.FILE_NAME, mode="w") as f:
-        dataset_sizes = {"train": config.TRAIN_LENGTH, "test": config.TEST_LENGTH}
-        for dataset in ["train", "test"]:
+    dataset_sizes = {"train": config.TRAIN_LENGTH, "test": config.TEST_LENGTH}
+    for dataset in ["train", "test"]:
+        with h5py.File(f"{config.FILE_NAME}_{dataset}.h5", mode="w") as f:
             digits, digit_labels = data[dataset]
             indices = np.random.permutation(len(digit_labels))
             digits_iter = cycle(digits[indices])
@@ -323,7 +323,7 @@ def generate_set(config: CfgNode, data: Dict[str, Tuple[np.ndarray, np.ndarray]]
                 config.FILE_NAME,
                 dataset_sizes[dataset],
             )
-            h5set = f.create_group(dataset)
+            h5set = f.create_group("dataset")
             images_set = h5set.create_dataset(
                 "images",
                 shape=(dataset_sizes[dataset], *config.IMAGE_SIZE, config.N_CHANNELS),

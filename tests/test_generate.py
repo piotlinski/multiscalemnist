@@ -290,7 +290,7 @@ def test_generating_entire_dataset(h5_mock, sample_config):
     data = {"train": (digits, digit_labels), "test": (digits, digit_labels)}
     generate_set(sample_config, data)
     enter_mock = h5_mock.return_value.__enter__
-    enter_mock.assert_called()
+    assert enter_mock.call_count == 2
     enter_mock.return_value.create_group.assert_has_calls(
-        [call("train"), call("test")], any_order=True
+        [call("dataset"), call("dataset")], any_order=True
     )

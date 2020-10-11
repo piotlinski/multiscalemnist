@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 
 _C = CfgNode()
-_C.FILE_NAME = "multiscalemnist.h5"
+_C.FILE_NAME = "multiscalemnist"
 _C.IMAGE_SIZE = (512, 512)
 _C.N_CHANNELS = 3
 _C.GRID_SIZES = (3, 3), (2, 2)
