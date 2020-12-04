@@ -18,7 +18,7 @@ def random_coordinate(min_idx: int, max_idx: int):
 
 
 def random_cell(grid: np.ndarray) -> Optional[Tuple[int, int]]:
-    """ Get random unused cell index from grid.
+    """Get random unused cell index from grid.
 
     :param grid: array with zeros (empty cells) and ones (full cells)
     :return: random empty cell index or None if no available
@@ -31,7 +31,7 @@ def random_cell(grid: np.ndarray) -> Optional[Tuple[int, int]]:
 
 
 def filled_margin(grid: np.ndarray, cell_index: Tuple[int, int]) -> Tuple[int, int]:
-    """ Get margin from nearest filled grid cell.
+    """Get margin from nearest filled grid cell.
 
     :param grid: array with zeros (empty cells) and ones (full cells)
     :param cell_index: selected cell index to put digit in
@@ -58,7 +58,7 @@ def filled_margin(grid: np.ndarray, cell_index: Tuple[int, int]) -> Tuple[int, i
 
 
 def image_margin(grid: np.ndarray, cell_index: Tuple[int, int]) -> Tuple[int, int]:
-    """ Get margin from grid border.
+    """Get margin from grid border.
 
     :param grid: array with zeros (empty cells) and ones (full cells)
     :param cell_index: selected cell index to put digit in
@@ -74,13 +74,15 @@ def random_digit_size(
     cell_index: Tuple[int, int],
     cell_size: Tuple[int, int],
     min_size: int,
+    max_size: int,
 ) -> int:
-    """ Get random digit size that will fit the given cell and its surroundings.
+    """Get random digit size that will fit the given cell and its surroundings.
 
     :param grid: array with zeros (empty cells) and ones (full cells)
     :param cell_index: selected cell index to put digit in
     :param cell_size: given cell size (height, width)
     :param min_size: minimal size of returned digit
+    :param max_size: maximal size of returned digit
     :return: random digit size (pixels) that will fit in given place
     """
     y_image_margin, x_image_margin = image_margin(grid=grid, cell_index=cell_index)
@@ -90,7 +92,9 @@ def random_digit_size(
         min(x_image_margin, x_filled_margin),
     )
     max_size = min(
-        int(cell_size[0] * (2 * margin[0] - 1)), int(cell_size[1] * (2 * margin[1] - 1))
+        int(cell_size[0] * (2 * margin[0] - 1)),
+        int(cell_size[1] * (2 * margin[1] - 1)),
+        max_size,
     )
     if max_size < min_size:
         return min_size
@@ -100,7 +104,7 @@ def random_digit_size(
 def calculate_center_coords(
     cell_index: Tuple[int, int], cell_size: Tuple[int, int]
 ) -> Tuple[int, int]:
-    """ Calculate cell center coordinates.
+    """Calculate cell center coordinates.
 
     :param cell_index: selected cell index
     :param cell_size: given cell size (height, width)
@@ -114,7 +118,7 @@ def calculate_center_coords(
 def randomize_center_coords(
     cell_center: Tuple[int, int], cell_size: Tuple[int, int], position_variance: float
 ) -> Tuple[int, int]:
-    """ Get randomized coordinates for digit center.
+    """Get randomized coordinates for digit center.
 
     :param cell_center: cell center for putting the image
     :param cell_size: given cell size (height, width)
@@ -131,7 +135,7 @@ def randomize_center_coords(
 def calculate_box_coords(
     digit: np.ndarray, center_coords: Tuple[int, int], image_size: Tuple[int, int]
 ) -> Tuple[int, int, int, int]:
-    """ Calculate bounding box coordinates (x0, y0, x1, y1).
+    """Calculate bounding box coordinates (x0, y0, x1, y1).
 
     :param digit: single digit transformed image
     :param center_coords: coordinates to put digit center at
@@ -152,7 +156,7 @@ def calculate_box_coords(
 def put_digit(
     image: np.ndarray, digit: np.ndarray, center_coords: Tuple[int, int]
 ) -> np.ndarray:
-    """ Put given digit on the image at given coordinates.
+    """Put given digit on the image at given coordinates.
 
     :param image: image to put digit on
     :param digit: transformed digit
@@ -179,7 +183,7 @@ def put_digit(
 
 
 def round_margin(margin: float, threshold: float) -> int:
-    """ Round margin according to threshold
+    """Round margin according to threshold
 
     :param margin: calculated margin
     :param threshold: threshold for rounding
@@ -198,7 +202,7 @@ def box_to_grid_ranges(
     image_size: Tuple[int, int],
     threshold: float,
 ) -> Tuple[Tuple[int, int], Tuple[int, int]]:
-    """ Get grid index ranges filled by bounding box.
+    """Get grid index ranges filled by bounding box.
 
     :param bounding_box: digit bounding box (x0, y0, x1, y1)
     :param grid_size: tuple defining grid for digits
@@ -220,7 +224,7 @@ def mark_as_filled(
     bounding_box: Tuple[int, int, int, int],
     threshold: float,
 ) -> np.ndarray:
-    """ Mark grid cells as filled.
+    """Mark grid cells as filled.
 
     :param grid: given grid array
     :param image_size: output image size
@@ -246,10 +250,11 @@ def generate_image_with_annotation(
     image_size: Tuple[int, int],
     n_channels: int,
     min_digit_size: int,
+    max_digit_size: int,
     position_variance: float,
     cell_filled_threshold: float,
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """ Generate image with digits put in a grid of given size.
+    """Generate image with digits put in a grid of given size.
 
     :param digits: numpy array iterable with digits to put on the image
     :param digit_labels: numpy array iterable with digit labels
@@ -257,6 +262,7 @@ def generate_image_with_annotation(
     :param image_size: output image size (height, width)
     :param n_channels: number of output channels
     :param min_digit_size: min size of a digit
+    :param max_digit_size: max size of a digit
     :param position_variance: how much digit position may vary from cell center
     :param cell_filled_threshold: minimum proportion to mark grid cell as filled
     :return: tuple: image, bounding boxes and labels
@@ -279,6 +285,7 @@ def generate_image_with_annotation(
             cell_index=cell_idx,
             cell_size=cell_size,
             min_size=min_digit_size,
+            max_size=max_digit_size,
         )
         cell_center = calculate_center_coords(cell_index=cell_idx, cell_size=cell_size)
         digit_center_coords = randomize_center_coords(
@@ -287,7 +294,9 @@ def generate_image_with_annotation(
             position_variance=position_variance,
         )
         digit = cv2.resize(
-            next(digits), dsize=(digit_size, digit_size), interpolation=cv2.INTER_CUBIC,
+            next(digits),
+            dsize=(digit_size, digit_size),
+            interpolation=cv2.INTER_CUBIC,
         )
         image = put_digit(image=image, digit=digit, center_coords=digit_center_coords)
         label = next(digit_labels)
@@ -350,6 +359,7 @@ def generate_set(config: CfgNode, data: Dict[str, Tuple[np.ndarray, np.ndarray]]
                     image_size=config.IMAGE_SIZE,
                     n_channels=config.N_CHANNELS,
                     min_digit_size=config.MIN_DIGIT_SIZE,
+                    max_digit_size=config.MAX_DIGIT_SIZE,
                     position_variance=config.POSITION_VARIANCE,
                     cell_filled_threshold=config.CELL_FILLED_THRESHOLD,
                 )

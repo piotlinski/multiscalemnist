@@ -34,7 +34,7 @@ def download_mnist(data_dir: Path, mnist_keys: Tuple[str, ...], mnist_url: str):
 
 
 def load_images(data_dir: Path, images_file: str) -> np.ndarray:
-    """ Load data from image file.
+    """Load data from image file.
 
     :param data_dir: directory contining data files
     :param images_file: mnist images file
@@ -46,7 +46,7 @@ def load_images(data_dir: Path, images_file: str) -> np.ndarray:
 
 
 def load_labels(data_dir: Path, labels_file) -> np.ndarray:
-    """ Load data from labels file.
+    """Load data from labels file.
 
     :param data_dir:directory contining data files
     :param labels_file: mnist labels file
@@ -60,7 +60,7 @@ def load_labels(data_dir: Path, labels_file) -> np.ndarray:
 def fetch_mnist(
     data_dir: str = "mnist", mnist_keys: Tuple[str, ...] = MNIST_KEYS
 ) -> Dict[str, Tuple[np.ndarray, np.ndarray]]:
-    """ Get dictionary with MNIST dataset.
+    """Get dictionary with MNIST dataset.
 
     :param data_dir: directory with MNIST files
     :param mnist_keys: MNIST files names

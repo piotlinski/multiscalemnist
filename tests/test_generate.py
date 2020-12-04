@@ -93,8 +93,13 @@ def test_random_digit_size(_iter):
     cell_index = (1, 1)
     cell_size = (20, 20)
     min_size = 5
+    max_size = 10000
     digit_size = random_digit_size(
-        grid=grid, cell_index=cell_index, cell_size=cell_size, min_size=min_size,
+        grid=grid,
+        cell_index=cell_index,
+        cell_size=cell_size,
+        min_size=min_size,
+        max_size=max_size,
     )
     assert min_size <= digit_size < 60
 
@@ -105,8 +110,30 @@ def test_random_digit_size_too_small():
     cell_index = (0, 0)
     cell_size = (20, 20)
     min_size = 28
+    max_size = 10000
     digit_size = random_digit_size(
-        grid=grid, cell_index=cell_index, cell_size=cell_size, min_size=min_size,
+        grid=grid,
+        cell_index=cell_index,
+        cell_size=cell_size,
+        min_size=min_size,
+        max_size=max_size,
+    )
+    assert digit_size == min_size
+
+
+def test_random_digit_size_too_big():
+    """Verify if max size returned when too big."""
+    grid = np.zeros((3, 3))
+    cell_index = (0, 0)
+    cell_size = (20, 20)
+    min_size = 1
+    max_size = 1
+    digit_size = random_digit_size(
+        grid=grid,
+        cell_index=cell_index,
+        cell_size=cell_size,
+        min_size=min_size,
+        max_size=max_size,
     )
     assert digit_size == min_size
 
@@ -273,6 +300,7 @@ def test_generate_image_with_annotation(grid_sizes, image_size, n_channels):
         image_size=image_size,
         n_channels=n_channels,
         min_digit_size=32,
+        max_digit_size=10000,
         position_variance=0.5,
         cell_filled_threshold=0.5,
     )
