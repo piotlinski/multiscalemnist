@@ -9,6 +9,7 @@ from multiscalemnist.generate import (
     calculate_box_coords,
     calculate_center_coords,
     filled_margin,
+    filter_digits,
     generate_image_with_annotation,
     generate_set,
     image_margin,
@@ -307,6 +308,18 @@ def test_generate_image_with_annotation(grid_sizes, image_size, n_channels):
     assert image.shape == (*image_size, n_channels)
     assert boxes.shape[0] == labels.shape[0] == n_digits
     assert boxes.shape[1] == 4
+
+
+@pytest.mark.parametrize("digit_set", [(1, 2), (1, 3), (2, 4)])
+def test_filter_digits(digit_set):
+    """Verify if filtered digits are dropped."""
+    digits = np.array([1, 2, 3, 1, 2, 3, 1, 2, 3])
+    labels = np.array([2, 2, 4, 3, 1, 1, 3, 2, 1])
+    filtered_digits, filtered_labels = filter_digits(digits, labels, digit_set)
+    assert len(filtered_digits) == len(filtered_labels) <= len(digits)
+    assert all([v in digit_set for v in filtered_labels])
+    discarded = set(labels) - set(digit_set)
+    assert all([v not in discarded for v in filtered_labels])
 
 
 @patch("multiscalemnist.generate.h5py.File")

@@ -316,6 +316,17 @@ def generate_image_with_annotation(
     return image, bounding_boxes, labels
 
 
+def filter_digits(
+    digits: np.ndarray, labels: np.ndarray, digit_set: Tuple[int, ...]
+) -> Tuple[np.ndarray, np.ndarray]:
+    """Remove digits that do not belong to the digit set from the dataset."""
+    filtered_indices = np.array([], dtype=int)
+    for digit in digit_set:
+        (indices,) = np.where(labels == digit)
+        filtered_indices = np.hstack((filtered_indices, indices))
+    return digits[filtered_indices], labels[filtered_indices]
+
+
 def generate_set(config: CfgNode, data: Dict[str, Tuple[np.ndarray, np.ndarray]]):
     """Generate entire dataset of MultiScaleMNIST."""
     max_digits = max([np.prod(grid) for grid in config.GRID_SIZES])
@@ -323,6 +334,7 @@ def generate_set(config: CfgNode, data: Dict[str, Tuple[np.ndarray, np.ndarray]]
         dataset_sizes = {"train": config.TRAIN_LENGTH, "test": config.TEST_LENGTH}
         for dataset in ["train", "test"]:
             digits, digit_labels = data[dataset]
+            digits, digit_labels = filter_digits(digits, digit_labels, config.DIGIT_SET)
             indices = np.random.permutation(len(digit_labels))
             digits_iter = cycle(digits[indices])
             digit_labels_iter = cycle(digit_labels[indices])
