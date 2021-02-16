@@ -3,6 +3,7 @@ import logging
 from typing import Optional
 
 import click
+import numpy as np
 from yacs.config import CfgNode
 
 from multiscalemnist.config import get_config
@@ -24,5 +25,6 @@ def main(ctx: click.Context, config_file: Optional[str]):
 @main.command(help="Generate dataset")
 @click.pass_obj
 def generate(config):
+    np.random.seed(config.SEED)
     data = fetch_mnist()
     generate_set(config, data)
