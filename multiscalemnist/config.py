@@ -21,6 +21,7 @@ _C.TRAIN_LENGTH = 40_000
 _C.TEST_LENGTH = 4_000
 _C.CHUNK_SIZE = 32
 _C.DIGIT_SET = (0, 1, 2, 3, 4, 5, 6, 7, 8, 9)
+_C.SEED = 0
 
 
 def get_config(config_file: Optional[str] = None, **kwargs) -> CfgNode:
