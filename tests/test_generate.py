@@ -1,5 +1,5 @@
 """Test MultiScaleMNIST generating."""
-from unittest.mock import call, patch
+from unittest.mock import patch
 
 import numpy as np
 import pytest
@@ -306,7 +306,7 @@ def test_generate_image_with_annotation(grid_sizes, image_size, n_channels):
         cell_filled_threshold=0.5,
     )
     assert image.shape == (*image_size, n_channels)
-    assert boxes.shape[0] == labels.shape[0] == n_digits
+    assert boxes.shape[0] == labels.shape[0]
     assert boxes.shape[1] == 4
 
 
@@ -322,16 +322,17 @@ def test_filter_digits(digit_set):
     assert all([v not in discarded for v in filtered_labels])
 
 
-@patch("multiscalemnist.generate.h5py.File")
-def test_generating_entire_dataset(h5_mock, sample_config):
-    """Test generating entire dataset with H5."""
+@patch("multiscalemnist.generate.cv2.imwrite")
+@patch("multiscalemnist.generate.Path.mkdir")
+@patch("multiscalemnist.generate.Path.open")
+def test_generating_entire_dataset(
+    open_mock, _mkdir_mock, _imwrite_mock, sample_config
+):
+    """Test generating entire dataset."""
     n_digits = max([np.prod(grid) for grid in sample_config.GRID_SIZES])
     digits = np.random.randint(0, 256, (n_digits, 28, 28), dtype=np.uint8)
     digit_labels = np.random.randint(0, 10, (n_digits,), dtype=np.uint8)
-    data = {"train": (digits, digit_labels), "test": (digits, digit_labels)}
+    data = {"train": (digits, digit_labels), "val": (digits, digit_labels)}
     generate_set(sample_config, data)
-    enter_mock = h5_mock.return_value.__enter__
+    enter_mock = open_mock.return_value.__enter__
     enter_mock.assert_called()
-    enter_mock.return_value.create_group.assert_has_calls(
-        [call("train"), call("test")], any_order=True
-    )

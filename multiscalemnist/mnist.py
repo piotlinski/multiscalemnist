@@ -78,4 +78,4 @@ def fetch_mnist(
             test_images = load_images(data_dir=data_path, images_file=key)
         elif "t10k-labels" in key:
             test_labels = load_labels(data_dir=data_path, labels_file=key)
-    return {"train": (train_images, train_labels), "test": (test_images, test_labels)}
+    return {"train": (train_images, train_labels), "val": (test_images, test_labels)}
