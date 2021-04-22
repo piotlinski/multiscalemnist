@@ -1,10 +1,10 @@
 """Generate MultiScaleMNIST dataset."""
 import logging
 from itertools import cycle
+from pathlib import Path
 from typing import Dict, Iterator, Optional, Tuple
 
 import cv2
-import h5py
 import numpy as np
 from tqdm.auto import trange
 from yacs.config import CfgNode
@@ -267,16 +267,15 @@ def generate_image_with_annotation(
     :param cell_filled_threshold: minimum proportion to mark grid cell as filled
     :return: tuple: image, bounding boxes and labels
     """
-    max_digits = max([np.prod(grid) for grid in grid_sizes])
     grid_size_idx = np.random.choice(range(len(grid_sizes)))
     grid_size = grid_sizes[grid_size_idx]
     grid = np.zeros(grid_size)
     image = np.zeros(image_size)
-    bounding_boxes = np.full((max_digits, 4), -1)
-    labels = np.full(max_digits, -1)
+    bounding_boxes = []
+    labels = []
     cell_size = image_size[0] // grid_size[0], image_size[1] // grid_size[1]
     n_digits = np.random.randint(np.prod(grid_size) // 2, np.prod(grid_size) + 1)
-    for idx in range(n_digits):
+    for _ in range(n_digits):
         cell_idx = random_cell(grid)
         if cell_idx is None:
             break
@@ -309,11 +308,11 @@ def generate_image_with_annotation(
             bounding_box=bounding_box,
             threshold=cell_filled_threshold,
         )
-        labels[idx] = label
-        bounding_boxes[idx] = bounding_box
+        labels.append(label)
+        bounding_boxes.append(bounding_box)
     image = np.clip(image, 0, 255).astype(np.uint8)
     image = np.dstack(n_channels * (image,))
-    return image, bounding_boxes, labels
+    return image, np.array(bounding_boxes), np.array(labels)
 
 
 def filter_digits(
@@ -327,55 +326,60 @@ def filter_digits(
     return digits[filtered_indices], labels[filtered_indices]
 
 
+def save_label(
+    filepath: Path, labels: np.ndarray, boxes: np.ndarray, image_size: Tuple[int, int]
+):
+    """Save given labels to file."""
+    height, width = image_size
+    with filepath.open("w") as fp:
+        for label, box in zip(labels, boxes):
+            x0, y0, x1, y1 = box
+            x = (x0 + x1) / 2 / width
+            y = (y0 + y1) / 2 / height
+            w = (x1 - x0) / width
+            h = (y1 - y0) / height
+            fp.write(f"{label} {x} {y} {w} {h}\n")
+
+
 def generate_set(config: CfgNode, data: Dict[str, Tuple[np.ndarray, np.ndarray]]):
     """Generate entire dataset of MultiScaleMNIST."""
-    max_digits = max([np.prod(grid) for grid in config.GRID_SIZES])
-    with h5py.File(config.FILE_NAME, mode="w") as f:
-        dataset_sizes = {"train": config.TRAIN_LENGTH, "test": config.TEST_LENGTH}
-        for dataset in ["train", "test"]:
-            digits, digit_labels = data[dataset]
-            digits, digit_labels = filter_digits(digits, digit_labels, config.DIGIT_SET)
-            indices = np.random.permutation(len(digit_labels))
-            digits_iter = cycle(digits[indices])
-            digit_labels_iter = cycle(digit_labels[indices])
-            logger.info(
-                "Creating %s dataset in file %s with %d entries",
-                dataset,
-                config.FILE_NAME,
-                dataset_sizes[dataset],
+    dataset_sizes = {"train": config.TRAIN_LENGTH, "val": config.TEST_LENGTH}
+    dataset_path = Path(config.DIRECTORY)
+    images_path = dataset_path.joinpath("images")
+    labels_path = dataset_path.joinpath("labels")
+    for dataset in ["train", "val"]:
+        digits, digit_labels = data[dataset]
+        img_dir = images_path.joinpath(dataset)
+        img_dir.mkdir(parents=True, exist_ok=True)
+        lbl_dir = labels_path.joinpath(dataset)
+        lbl_dir.mkdir(parents=True, exist_ok=True)
+        digits, digit_labels = filter_digits(digits, digit_labels, config.DIGIT_SET)
+        indices = np.random.permutation(len(digit_labels))
+        digits_iter = cycle(digits[indices])
+        digit_labels_iter = cycle(digit_labels[indices])
+        logger.info(
+            "Creating %s dataset in directories %s and %s with %d entries",
+            dataset,
+            str(img_dir),
+            str(lbl_dir),
+            dataset_sizes[dataset],
+        )
+        padding = len(str(dataset_sizes[dataset])) + 1
+        for idx in trange(dataset_sizes[dataset]):
+            filename = f"{str(idx).zfill(padding)}"
+            image, boxes, labels = generate_image_with_annotation(
+                digits=digits_iter,
+                digit_labels=digit_labels_iter,
+                grid_sizes=config.GRID_SIZES,
+                image_size=config.IMAGE_SIZE,
+                n_channels=config.N_CHANNELS,
+                min_digit_size=config.MIN_DIGIT_SIZE,
+                max_digit_size=config.MAX_DIGIT_SIZE,
+                position_variance=config.POSITION_VARIANCE,
+                cell_filled_threshold=config.CELL_FILLED_THRESHOLD,
             )
-            h5set = f.create_group(dataset)
-            images_set = h5set.create_dataset(
-                "images",
-                shape=(dataset_sizes[dataset], *config.IMAGE_SIZE, config.N_CHANNELS),
-                chunks=(config.CHUNK_SIZE, *config.IMAGE_SIZE, config.N_CHANNELS),
-                dtype=np.uint8,
+            cv2.imwrite(str(img_dir.joinpath(f"{filename}.jpg")), image)
+            save_label(
+                lbl_dir.joinpath(f"{filename}.txt"), labels, boxes, config.IMAGE_SIZE
             )
-            boxes_set = h5set.create_dataset(
-                "boxes",
-                shape=(dataset_sizes[dataset], max_digits, 4),
-                chunks=(config.CHUNK_SIZE, max_digits, 4),
-                dtype=np.int,
-            )
-            labels_set = h5set.create_dataset(
-                "labels",
-                shape=(dataset_sizes[dataset], max_digits),
-                chunks=(config.CHUNK_SIZE, max_digits),
-                dtype=np.int,
-            )
-            for idx in trange(dataset_sizes[dataset]):
-                image, boxes, labels = generate_image_with_annotation(
-                    digits=digits_iter,
-                    digit_labels=digit_labels_iter,
-                    grid_sizes=config.GRID_SIZES,
-                    image_size=config.IMAGE_SIZE,
-                    n_channels=config.N_CHANNELS,
-                    min_digit_size=config.MIN_DIGIT_SIZE,
-                    max_digit_size=config.MAX_DIGIT_SIZE,
-                    position_variance=config.POSITION_VARIANCE,
-                    cell_filled_threshold=config.CELL_FILLED_THRESHOLD,
-                )
-                images_set[idx] = image
-                boxes_set[idx] = boxes
-                labels_set[idx] = labels
     logger.info("Done!")

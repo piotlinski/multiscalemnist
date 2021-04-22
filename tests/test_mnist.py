@@ -82,8 +82,8 @@ def test_fetching_mnist(load_images_mock, load_labels_mock, _verify_mock):
         mnist_keys=("train-images", "train-labels", "t10k-images", "t10k-labels"),
     )
     assert "train" in data
-    assert "test" in data
+    assert "val" in data
     assert data["train"][0].shape == (3, 28, 28)
-    assert data["test"][0].shape == (2, 28, 28)
+    assert data["val"][0].shape == (2, 28, 28)
     assert data["train"][1].shape == (3,)
-    assert data["test"][1].shape == (2,)
+    assert data["val"][1].shape == (2,)
